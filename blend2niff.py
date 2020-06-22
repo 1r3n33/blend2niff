@@ -44,6 +44,8 @@ CAM_TYPE_ORTHO = 0x00000001
 
 BAD_INDEX = 0xFFFFFFFF
 
+BYTE_ORDER = 'big'
+
 
 #
 # File Header
@@ -80,8 +82,8 @@ class Niff2FileHeader:
         return 25*4
 
 
-def niff2_file_header_builder(context, file_size):
-    fh = Niff2FileHeader
+def niff2_file_header_builder(file_size):
+    fh = Niff2FileHeader()
     fh.version = MAKER_CODE << 24 | TOOL_CODE << 16 | NIFF_MAJOR_VERSION << 8 | NIFF_MINOR_VERSION
     fh.file_size = file_size
     fh.header_tag = TAG_HEADER
@@ -111,31 +113,31 @@ def niff2_file_header_builder(context, file_size):
 
 
 def niff2_file_header_writer(fh, buf):
-    buf += fh.version.to_bytes(4, byteorder='big')
-    buf += fh.file_size.to_bytes(4, byteorder='big')
-    buf += fh.header_tag.to_bytes(4, byteorder='big')
-    buf += fh.file_header_num_byte.to_bytes(4, byteorder='big')
-    buf += fh.scene_list_num_byte.to_bytes(4, byteorder='big')
-    buf += fh.env_list_num_byte.to_bytes(4, byteorder='big')
-    buf += fh.cam_list_num_byte.to_bytes(4, byteorder='big')
-    buf += fh.light_list_num_byte.to_bytes(4, byteorder='big')
-    buf += fh.obj_list_num_byte.to_bytes(4, byteorder='big')
-    buf += fh.shape_list_num_byte.to_bytes(4, byteorder='big')
-    buf += fh.vtx_list_num_byte.to_bytes(4, byteorder='big')
-    buf += fh.color_list_num_byte.to_bytes(4, byteorder='big')
-    buf += fh.vector_list_num_byte.to_bytes(4, byteorder='big')
-    buf += fh.st_list_num_byte.to_bytes(4, byteorder='big')
-    buf += fh.tri_list_num_byte.to_bytes(4, byteorder='big')
-    buf += fh.part_list_num_byte.to_bytes(4, byteorder='big')
-    buf += fh.mat_list_num_byte.to_bytes(4, byteorder='big')
-    buf += fh.tex_list_num_byte.to_bytes(4, byteorder='big')
-    buf += fh.tex_img_list_num_byte.to_bytes(4, byteorder='big')
-    buf += fh.anim_list_num_byte.to_bytes(4, byteorder='big')
-    buf += fh.coll_list_num_byte.to_bytes(4, byteorder='big')
-    buf += fh.switch_list_num_byte.to_bytes(4, byteorder='big')
-    buf += fh.name_list_num_byte.to_bytes(4, byteorder='big')
-    buf += fh.nintendo_extension_block_size.to_bytes(4, byteorder='big')
-    buf += fh.user_extension_block_size.to_bytes(4, byteorder='big')
+    buf += fh.version.to_bytes(4, BYTE_ORDER)
+    buf += fh.file_size.to_bytes(4, BYTE_ORDER)
+    buf += fh.header_tag.to_bytes(4, BYTE_ORDER)
+    buf += fh.file_header_num_byte.to_bytes(4, BYTE_ORDER)
+    buf += fh.scene_list_num_byte.to_bytes(4, BYTE_ORDER)
+    buf += fh.env_list_num_byte.to_bytes(4, BYTE_ORDER)
+    buf += fh.cam_list_num_byte.to_bytes(4, BYTE_ORDER)
+    buf += fh.light_list_num_byte.to_bytes(4, BYTE_ORDER)
+    buf += fh.obj_list_num_byte.to_bytes(4, BYTE_ORDER)
+    buf += fh.shape_list_num_byte.to_bytes(4, BYTE_ORDER)
+    buf += fh.vtx_list_num_byte.to_bytes(4, BYTE_ORDER)
+    buf += fh.color_list_num_byte.to_bytes(4, BYTE_ORDER)
+    buf += fh.vector_list_num_byte.to_bytes(4, BYTE_ORDER)
+    buf += fh.st_list_num_byte.to_bytes(4, BYTE_ORDER)
+    buf += fh.tri_list_num_byte.to_bytes(4, BYTE_ORDER)
+    buf += fh.part_list_num_byte.to_bytes(4, BYTE_ORDER)
+    buf += fh.mat_list_num_byte.to_bytes(4, BYTE_ORDER)
+    buf += fh.tex_list_num_byte.to_bytes(4, BYTE_ORDER)
+    buf += fh.tex_img_list_num_byte.to_bytes(4, BYTE_ORDER)
+    buf += fh.anim_list_num_byte.to_bytes(4, BYTE_ORDER)
+    buf += fh.coll_list_num_byte.to_bytes(4, BYTE_ORDER)
+    buf += fh.switch_list_num_byte.to_bytes(4, BYTE_ORDER)
+    buf += fh.name_list_num_byte.to_bytes(4, BYTE_ORDER)
+    buf += fh.nintendo_extension_block_size.to_bytes(4, BYTE_ORDER)
+    buf += fh.user_extension_block_size.to_bytes(4, BYTE_ORDER)
     return buf
 
 
@@ -155,39 +157,46 @@ class Niff2SceneHeader:
     nintendo_extension_block_size: int
     user_extension_block_size: int
 
-    @staticmethod
-    def num_bytes():
-        return 11*4
+    def num_bytes(self):
+        return 11*4 + self.scene_obj_link_num*4
 
 
-def niff2_scene_header_builder(context, scene_count):
-    sh = Niff2SceneHeader
+def niff2_scene_header_builder(data):
+    obj_count = len(data.meshes)
+
+    sh = Niff2SceneHeader()
     sh.scene_header_tag = TAG_SCENE_HEADER
-    sh.scene_header_size = 11*4
-    sh.scene_size = 11*4
     sh.scene_cfg = SCENE_CFG_VIDEO_NTSC
     sh.scene_name_index = BAD_INDEX
-    sh.scene_obj_link_num = 0
+    sh.scene_obj_link_num = obj_count
     sh.scene_env_link_num = 0
     sh.scene_cam_link_num = 0
     sh.scene_light_link_num = 0
     sh.nintendo_extension_block_size = 0
     sh.user_extension_block_size = 0
+
+    sh.scene_header_size = 11*4
+    sh.scene_size = sh.num_bytes()
+
     return sh
 
 
 def niff2_scene_header_writer(sh, buf):
-    buf += sh.scene_header_tag.to_bytes(4, byteorder='big')
-    buf += sh.scene_header_size.to_bytes(4, byteorder='big')
-    buf += sh.scene_size.to_bytes(4, byteorder='big')
-    buf += sh.scene_cfg.to_bytes(4, byteorder='big')
-    buf += sh.scene_name_index.to_bytes(4, byteorder='big')
-    buf += sh.scene_obj_link_num.to_bytes(4, byteorder='big')
-    buf += sh.scene_env_link_num.to_bytes(4, byteorder='big')
-    buf += sh.scene_cam_link_num.to_bytes(4, byteorder='big')
-    buf += sh.scene_light_link_num.to_bytes(4, byteorder='big')
-    buf += sh.nintendo_extension_block_size.to_bytes(4, byteorder='big')
-    buf += sh.user_extension_block_size.to_bytes(4, byteorder='big')
+    buf += sh.scene_header_tag.to_bytes(4, BYTE_ORDER)
+    buf += sh.scene_header_size.to_bytes(4, BYTE_ORDER)
+    buf += sh.scene_size.to_bytes(4, BYTE_ORDER)
+    buf += sh.scene_cfg.to_bytes(4, BYTE_ORDER)
+    buf += sh.scene_name_index.to_bytes(4, BYTE_ORDER)
+    buf += sh.scene_obj_link_num.to_bytes(4, BYTE_ORDER)
+    buf += sh.scene_env_link_num.to_bytes(4, BYTE_ORDER)
+    buf += sh.scene_cam_link_num.to_bytes(4, BYTE_ORDER)
+    buf += sh.scene_light_link_num.to_bytes(4, BYTE_ORDER)
+    buf += sh.nintendo_extension_block_size.to_bytes(4, BYTE_ORDER)
+    buf += sh.user_extension_block_size.to_bytes(4, BYTE_ORDER)
+
+    for i in range(sh.scene_obj_link_num):
+        buf += i.to_bytes(4, BYTE_ORDER)
+
     return buf
 
 
@@ -207,8 +216,8 @@ class Niff2EnvListHeader:
         return 6*4
 
 
-def niff2_env_list_header_builder(context):
-    elh = Niff2EnvListHeader
+def niff2_env_list_header_builder(data):
+    elh = Niff2EnvListHeader()
     elh.env_list_tag = TAG_ENV_LIST
     elh.env_list_header_size = 6*4
     elh.env_list_size = 6*4
@@ -219,12 +228,12 @@ def niff2_env_list_header_builder(context):
 
 
 def niff2_env_list_header_writer(elh, buf):
-    buf += elh.env_list_tag.to_bytes(4, byteorder='big')
-    buf += elh.env_list_header_size.to_bytes(4, byteorder='big')
-    buf += elh.env_list_size.to_bytes(4, byteorder='big')
-    buf += elh.env_num.to_bytes(4, byteorder='big')
-    buf += elh.nintendo_extension_block_size.to_bytes(4, byteorder='big')
-    buf += elh.user_extension_block_size.to_bytes(4, byteorder='big')
+    buf += elh.env_list_tag.to_bytes(4, BYTE_ORDER)
+    buf += elh.env_list_header_size.to_bytes(4, BYTE_ORDER)
+    buf += elh.env_list_size.to_bytes(4, BYTE_ORDER)
+    buf += elh.env_num.to_bytes(4, BYTE_ORDER)
+    buf += elh.nintendo_extension_block_size.to_bytes(4, BYTE_ORDER)
+    buf += elh.user_extension_block_size.to_bytes(4, BYTE_ORDER)
     return buf
 
 
@@ -244,8 +253,8 @@ class Niff2CamListHeader:
         return 6*4
 
 
-def niff2_cam_list_header_builder(context):
-    clh = Niff2CamListHeader
+def niff2_cam_list_header_builder(data):
+    clh = Niff2CamListHeader()
     clh.cam_list_tag = TAG_CAM_LIST
     clh.cam_list_header_size = 6*4
     clh.cam_list_size = 6*4
@@ -256,12 +265,12 @@ def niff2_cam_list_header_builder(context):
 
 
 def niff2_cam_list_header_writer(clh, buf):
-    buf += clh.cam_list_tag.to_bytes(4, byteorder='big')
-    buf += clh.cam_list_header_size.to_bytes(4, byteorder='big')
-    buf += clh.cam_list_size.to_bytes(4, byteorder='big')
-    buf += clh.cam_num.to_bytes(4, byteorder='big')
-    buf += clh.nintendo_extension_block_size.to_bytes(4, byteorder='big')
-    buf += clh.user_extension_block_size.to_bytes(4, byteorder='big')
+    buf += clh.cam_list_tag.to_bytes(4, BYTE_ORDER)
+    buf += clh.cam_list_header_size.to_bytes(4, BYTE_ORDER)
+    buf += clh.cam_list_size.to_bytes(4, BYTE_ORDER)
+    buf += clh.cam_num.to_bytes(4, BYTE_ORDER)
+    buf += clh.nintendo_extension_block_size.to_bytes(4, BYTE_ORDER)
+    buf += clh.user_extension_block_size.to_bytes(4, BYTE_ORDER)
     return buf
 
 
@@ -281,8 +290,8 @@ class Niff2LightListHeader:
         return 6*4
 
 
-def niff2_light_list_header_builder(context):
-    llh = Niff2LightListHeader
+def niff2_light_list_header_builder(data):
+    llh = Niff2LightListHeader()
     llh.light_list_tag = TAG_LIGHT_LIST
     llh.light_list_header_size = 6*4
     llh.light_list_size = 6*4
@@ -293,12 +302,12 @@ def niff2_light_list_header_builder(context):
 
 
 def niff2_light_list_header_writer(llh, buf):
-    buf += llh.light_list_tag.to_bytes(4, byteorder='big')
-    buf += llh.light_list_header_size.to_bytes(4, byteorder='big')
-    buf += llh.light_list_size.to_bytes(4, byteorder='big')
-    buf += llh.light_num.to_bytes(4, byteorder='big')
-    buf += llh.nintendo_extension_block_size.to_bytes(4, byteorder='big')
-    buf += llh.user_extension_block_size.to_bytes(4, byteorder='big')
+    buf += llh.light_list_tag.to_bytes(4, BYTE_ORDER)
+    buf += llh.light_list_header_size.to_bytes(4, BYTE_ORDER)
+    buf += llh.light_list_size.to_bytes(4, BYTE_ORDER)
+    buf += llh.light_num.to_bytes(4, BYTE_ORDER)
+    buf += llh.nintendo_extension_block_size.to_bytes(4, BYTE_ORDER)
+    buf += llh.user_extension_block_size.to_bytes(4, BYTE_ORDER)
     return buf
 
 
@@ -318,8 +327,8 @@ class Niff2ObjListHeader:
         return 6*4
 
 
-def niff2_obj_list_header_builder(context):
-    olh = Niff2ObjListHeader
+def niff2_obj_list_header_builder(data):
+    olh = Niff2ObjListHeader()
     olh.obj_list_tag = TAG_OBJ_LIST
     olh.obj_list_header_size = 6*4
     olh.obj_list_size = 6*4
@@ -330,12 +339,12 @@ def niff2_obj_list_header_builder(context):
 
 
 def niff2_obj_list_header_writer(olh, buf):
-    buf += olh.obj_list_tag.to_bytes(4, byteorder='big')
-    buf += olh.obj_list_header_size.to_bytes(4, byteorder='big')
-    buf += olh.obj_list_size.to_bytes(4, byteorder='big')
-    buf += olh.obj_num.to_bytes(4, byteorder='big')
-    buf += olh.nintendo_extension_block_size.to_bytes(4, byteorder='big')
-    buf += olh.user_extension_block_size.to_bytes(4, byteorder='big')
+    buf += olh.obj_list_tag.to_bytes(4, BYTE_ORDER)
+    buf += olh.obj_list_header_size.to_bytes(4, BYTE_ORDER)
+    buf += olh.obj_list_size.to_bytes(4, BYTE_ORDER)
+    buf += olh.obj_num.to_bytes(4, BYTE_ORDER)
+    buf += olh.nintendo_extension_block_size.to_bytes(4, BYTE_ORDER)
+    buf += olh.user_extension_block_size.to_bytes(4, BYTE_ORDER)
     return buf
 
 
@@ -355,8 +364,8 @@ class Niff2ShapeListHeader:
         return 6*4
 
 
-def niff2_shape_list_header_builder(context):
-    slh = Niff2ShapeListHeader
+def niff2_shape_list_header_builder(data):
+    slh = Niff2ShapeListHeader()
     slh.shape_list_tag = TAG_SHAPE_LIST
     slh.shape_list_header_size = 6*4
     slh.shape_list_size = 6*4
@@ -367,12 +376,12 @@ def niff2_shape_list_header_builder(context):
 
 
 def niff2_shape_list_header_writer(slh, buf):
-    buf += slh.shape_list_tag.to_bytes(4, byteorder='big')
-    buf += slh.shape_list_header_size.to_bytes(4, byteorder='big')
-    buf += slh.shape_list_size.to_bytes(4, byteorder='big')
-    buf += slh.shape_num.to_bytes(4, byteorder='big')
-    buf += slh.nintendo_extension_block_size.to_bytes(4, byteorder='big')
-    buf += slh.user_extension_block_size.to_bytes(4, byteorder='big')
+    buf += slh.shape_list_tag.to_bytes(4, BYTE_ORDER)
+    buf += slh.shape_list_header_size.to_bytes(4, BYTE_ORDER)
+    buf += slh.shape_list_size.to_bytes(4, BYTE_ORDER)
+    buf += slh.shape_num.to_bytes(4, BYTE_ORDER)
+    buf += slh.nintendo_extension_block_size.to_bytes(4, BYTE_ORDER)
+    buf += slh.user_extension_block_size.to_bytes(4, BYTE_ORDER)
     return buf
 
 
@@ -392,8 +401,8 @@ class Niff2VtxListHeader:
         return 6*4
 
 
-def niff2_vtx_list_header_builder(context):
-    vlh = Niff2VtxListHeader
+def niff2_vtx_list_header_builder(data):
+    vlh = Niff2VtxListHeader()
     vlh.vtx_list_tag = TAG_VTX_LIST
     vlh.vtx_list_header_size = 6*4
     vlh.vtx_list_size = 6*4
@@ -404,12 +413,12 @@ def niff2_vtx_list_header_builder(context):
 
 
 def niff2_vtx_list_header_writer(vlh, buf):
-    buf += vlh.vtx_list_tag.to_bytes(4, byteorder='big')
-    buf += vlh.vtx_list_header_size.to_bytes(4, byteorder='big')
-    buf += vlh.vtx_list_size.to_bytes(4, byteorder='big')
-    buf += vlh.vtx_group_num.to_bytes(4, byteorder='big')
-    buf += vlh.nintendo_extension_block_size.to_bytes(4, byteorder='big')
-    buf += vlh.user_extension_block_size.to_bytes(4, byteorder='big')
+    buf += vlh.vtx_list_tag.to_bytes(4, BYTE_ORDER)
+    buf += vlh.vtx_list_header_size.to_bytes(4, BYTE_ORDER)
+    buf += vlh.vtx_list_size.to_bytes(4, BYTE_ORDER)
+    buf += vlh.vtx_group_num.to_bytes(4, BYTE_ORDER)
+    buf += vlh.nintendo_extension_block_size.to_bytes(4, BYTE_ORDER)
+    buf += vlh.user_extension_block_size.to_bytes(4, BYTE_ORDER)
     return buf
 
 
@@ -429,8 +438,8 @@ class Niff2TriListHeader:
         return 6*4
 
 
-def niff2_tri_list_header_builder(context):
-    tlh = Niff2TriListHeader
+def niff2_tri_list_header_builder(data):
+    tlh = Niff2TriListHeader()
     tlh.tri_list_tag = TAG_TRI_LIST
     tlh.tri_list_header_size = 6*4
     tlh.tri_list_size = 6*4
@@ -441,12 +450,12 @@ def niff2_tri_list_header_builder(context):
 
 
 def niff2_tri_list_header_writer(tlh, buf):
-    buf += tlh.tri_list_tag.to_bytes(4, byteorder='big')
-    buf += tlh.tri_list_header_size.to_bytes(4, byteorder='big')
-    buf += tlh.tri_list_size.to_bytes(4, byteorder='big')
-    buf += tlh.tri_group_num.to_bytes(4, byteorder='big')
-    buf += tlh.nintendo_extension_block_size.to_bytes(4, byteorder='big')
-    buf += tlh.user_extension_block_size.to_bytes(4, byteorder='big')
+    buf += tlh.tri_list_tag.to_bytes(4, BYTE_ORDER)
+    buf += tlh.tri_list_header_size.to_bytes(4, BYTE_ORDER)
+    buf += tlh.tri_list_size.to_bytes(4, BYTE_ORDER)
+    buf += tlh.tri_group_num.to_bytes(4, BYTE_ORDER)
+    buf += tlh.nintendo_extension_block_size.to_bytes(4, BYTE_ORDER)
+    buf += tlh.user_extension_block_size.to_bytes(4, BYTE_ORDER)
     return buf
 
 
@@ -467,8 +476,8 @@ class Niff2ColorListHeader:
         return 7*4
 
 
-def niff2_color_list_header_builder(context):
-    clh = Niff2ColorListHeader
+def niff2_color_list_header_builder(data):
+    clh = Niff2ColorListHeader()
     clh.color_list_tag = TAG_COLOR_LIST
     clh.color_list_header_size = 7*4
     clh.color_list_size = 7*4
@@ -480,13 +489,13 @@ def niff2_color_list_header_builder(context):
 
 
 def niff2_color_list_header_writer(clh, buf):
-    buf += clh.color_list_tag.to_bytes(4, byteorder='big')
-    buf += clh.color_list_header_size.to_bytes(4, byteorder='big')
-    buf += clh.color_list_size.to_bytes(4, byteorder='big')
-    buf += clh.tri_color_group_num.to_bytes(4, byteorder='big')
-    buf += clh.vtx_color_group_num.to_bytes(4, byteorder='big')
-    buf += clh.nintendo_extension_block_size.to_bytes(4, byteorder='big')
-    buf += clh.user_extension_block_size.to_bytes(4, byteorder='big')
+    buf += clh.color_list_tag.to_bytes(4, BYTE_ORDER)
+    buf += clh.color_list_header_size.to_bytes(4, BYTE_ORDER)
+    buf += clh.color_list_size.to_bytes(4, BYTE_ORDER)
+    buf += clh.tri_color_group_num.to_bytes(4, BYTE_ORDER)
+    buf += clh.vtx_color_group_num.to_bytes(4, BYTE_ORDER)
+    buf += clh.nintendo_extension_block_size.to_bytes(4, BYTE_ORDER)
+    buf += clh.user_extension_block_size.to_bytes(4, BYTE_ORDER)
     return buf
 
 
@@ -507,8 +516,8 @@ class Niff2VectorListHeader:
         return 7*4
 
 
-def niff2_vector_list_header_builder(context):
-    vlh = Niff2VectorListHeader
+def niff2_vector_list_header_builder(data):
+    vlh = Niff2VectorListHeader()
     vlh.vector_list_tag = TAG_VECTOR_LIST
     vlh.vector_list_header_size = 7*4
     vlh.vector_list_size = 7*4
@@ -520,13 +529,13 @@ def niff2_vector_list_header_builder(context):
 
 
 def niff2_vector_list_header_writer(vlh, buf):
-    buf += vlh.vector_list_tag.to_bytes(4, byteorder='big')
-    buf += vlh.vector_list_header_size.to_bytes(4, byteorder='big')
-    buf += vlh.vector_list_size.to_bytes(4, byteorder='big')
-    buf += vlh.tri_nv_group_num.to_bytes(4, byteorder='big')
-    buf += vlh.vtx_nv_group_num.to_bytes(4, byteorder='big')
-    buf += vlh.nintendo_extension_block_size.to_bytes(4, byteorder='big')
-    buf += vlh.user_extension_block_size.to_bytes(4, byteorder='big')
+    buf += vlh.vector_list_tag.to_bytes(4, BYTE_ORDER)
+    buf += vlh.vector_list_header_size.to_bytes(4, BYTE_ORDER)
+    buf += vlh.vector_list_size.to_bytes(4, BYTE_ORDER)
+    buf += vlh.tri_nv_group_num.to_bytes(4, BYTE_ORDER)
+    buf += vlh.vtx_nv_group_num.to_bytes(4, BYTE_ORDER)
+    buf += vlh.nintendo_extension_block_size.to_bytes(4, BYTE_ORDER)
+    buf += vlh.user_extension_block_size.to_bytes(4, BYTE_ORDER)
     return buf
 
 
@@ -546,8 +555,8 @@ class Niff2StListHeader:
         return 6*4
 
 
-def niff2_st_list_header_builder(context):
-    stlh = Niff2StListHeader
+def niff2_st_list_header_builder(data):
+    stlh = Niff2StListHeader()
     stlh.st_list_tag = TAG_ST_LIST
     stlh.st_list_header_size = 6*4
     stlh.st_list_size = 6*4
@@ -558,12 +567,12 @@ def niff2_st_list_header_builder(context):
 
 
 def niff2_st_list_header_writer(stlh, buf):
-    buf += stlh.st_list_tag.to_bytes(4, byteorder='big')
-    buf += stlh.st_list_header_size.to_bytes(4, byteorder='big')
-    buf += stlh.st_list_size.to_bytes(4, byteorder='big')
-    buf += stlh.st_group_num.to_bytes(4, byteorder='big')
-    buf += stlh.nintendo_extension_block_size.to_bytes(4, byteorder='big')
-    buf += stlh.user_extension_block_size.to_bytes(4, byteorder='big')
+    buf += stlh.st_list_tag.to_bytes(4, BYTE_ORDER)
+    buf += stlh.st_list_header_size.to_bytes(4, BYTE_ORDER)
+    buf += stlh.st_list_size.to_bytes(4, BYTE_ORDER)
+    buf += stlh.st_group_num.to_bytes(4, BYTE_ORDER)
+    buf += stlh.nintendo_extension_block_size.to_bytes(4, BYTE_ORDER)
+    buf += stlh.user_extension_block_size.to_bytes(4, BYTE_ORDER)
     return buf
 
 
@@ -583,8 +592,8 @@ class Niff2PartListHeader:
         return 6*4
 
 
-def niff2_part_list_header_builder(context):
-    plh = Niff2PartListHeader
+def niff2_part_list_header_builder(data):
+    plh = Niff2PartListHeader()
     plh.part_list_tag = TAG_PART_LIST
     plh.part_list_header_size = 6*4
     plh.part_list_size = 6*4
@@ -595,12 +604,12 @@ def niff2_part_list_header_builder(context):
 
 
 def niff2_part_list_header_writer(plh, buf):
-    buf += plh.part_list_tag.to_bytes(4, byteorder='big')
-    buf += plh.part_list_header_size.to_bytes(4, byteorder='big')
-    buf += plh.part_list_size.to_bytes(4, byteorder='big')
-    buf += plh.part_num.to_bytes(4, byteorder='big')
-    buf += plh.nintendo_extension_block_size.to_bytes(4, byteorder='big')
-    buf += plh.user_extension_block_size.to_bytes(4, byteorder='big')
+    buf += plh.part_list_tag.to_bytes(4, BYTE_ORDER)
+    buf += plh.part_list_header_size.to_bytes(4, BYTE_ORDER)
+    buf += plh.part_list_size.to_bytes(4, BYTE_ORDER)
+    buf += plh.part_num.to_bytes(4, BYTE_ORDER)
+    buf += plh.nintendo_extension_block_size.to_bytes(4, BYTE_ORDER)
+    buf += plh.user_extension_block_size.to_bytes(4, BYTE_ORDER)
     return buf
 
 
@@ -620,8 +629,8 @@ class Niff2MatListHeader:
         return 6*4
 
 
-def niff2_mat_list_header_builder(context):
-    mlh = Niff2MatListHeader
+def niff2_mat_list_header_builder(data):
+    mlh = Niff2MatListHeader()
     mlh.mat_list_tag = TAG_MAT_LIST
     mlh.mat_list_header_size = 6*4
     mlh.mat_list_size = 6*4
@@ -632,12 +641,12 @@ def niff2_mat_list_header_builder(context):
 
 
 def niff2_mat_list_header_writer(mlh, buf):
-    buf += mlh.mat_list_tag.to_bytes(4, byteorder='big')
-    buf += mlh.mat_list_header_size.to_bytes(4, byteorder='big')
-    buf += mlh.mat_list_size.to_bytes(4, byteorder='big')
-    buf += mlh.mat_num.to_bytes(4, byteorder='big')
-    buf += mlh.nintendo_extension_block_size.to_bytes(4, byteorder='big')
-    buf += mlh.user_extension_block_size.to_bytes(4, byteorder='big')
+    buf += mlh.mat_list_tag.to_bytes(4, BYTE_ORDER)
+    buf += mlh.mat_list_header_size.to_bytes(4, BYTE_ORDER)
+    buf += mlh.mat_list_size.to_bytes(4, BYTE_ORDER)
+    buf += mlh.mat_num.to_bytes(4, BYTE_ORDER)
+    buf += mlh.nintendo_extension_block_size.to_bytes(4, BYTE_ORDER)
+    buf += mlh.user_extension_block_size.to_bytes(4, BYTE_ORDER)
     return buf
 
 
@@ -657,8 +666,8 @@ class Niff2TexListHeader:
         return 6*4
 
 
-def niff2_tex_list_header_builder(context):
-    tlh = Niff2TexListHeader
+def niff2_tex_list_header_builder(data):
+    tlh = Niff2TexListHeader()
     tlh.tex_list_tag = TAG_TEX_LIST
     tlh.tex_list_header_size = 6*4
     tlh.tex_list_size = 6*4
@@ -669,12 +678,12 @@ def niff2_tex_list_header_builder(context):
 
 
 def niff2_tex_list_header_writer(tlh, buf):
-    buf += tlh.tex_list_tag.to_bytes(4, byteorder='big')
-    buf += tlh.tex_list_header_size.to_bytes(4, byteorder='big')
-    buf += tlh.tex_list_size.to_bytes(4, byteorder='big')
-    buf += tlh.tex_num.to_bytes(4, byteorder='big')
-    buf += tlh.nintendo_extension_block_size.to_bytes(4, byteorder='big')
-    buf += tlh.user_extension_block_size.to_bytes(4, byteorder='big')
+    buf += tlh.tex_list_tag.to_bytes(4, BYTE_ORDER)
+    buf += tlh.tex_list_header_size.to_bytes(4, BYTE_ORDER)
+    buf += tlh.tex_list_size.to_bytes(4, BYTE_ORDER)
+    buf += tlh.tex_num.to_bytes(4, BYTE_ORDER)
+    buf += tlh.nintendo_extension_block_size.to_bytes(4, BYTE_ORDER)
+    buf += tlh.user_extension_block_size.to_bytes(4, BYTE_ORDER)
     return buf
 
 
@@ -694,8 +703,8 @@ class Niff2TexImgListHeader:
         return 6*4
 
 
-def niff2_tex_img_list_header_builder(context):
-    tilh = Niff2TexImgListHeader
+def niff2_tex_img_list_header_builder(data):
+    tilh = Niff2TexImgListHeader()
     tilh.tex_img_list_tag = TAG_TEX_IMG_LIST
     tilh.tex_img_list_header_size = 6*4
     tilh.tex_img_list_size = 6*4
@@ -706,12 +715,12 @@ def niff2_tex_img_list_header_builder(context):
 
 
 def niff2_tex_img_list_header_writer(tilh, buf):
-    buf += tilh.tex_img_list_tag.to_bytes(4, byteorder='big')
-    buf += tilh.tex_img_list_header_size.to_bytes(4, byteorder='big')
-    buf += tilh.tex_img_list_size.to_bytes(4, byteorder='big')
-    buf += tilh.tex_img_num.to_bytes(4, byteorder='big')
-    buf += tilh.nintendo_extension_block_size.to_bytes(4, byteorder='big')
-    buf += tilh.user_extension_block_size.to_bytes(4, byteorder='big')
+    buf += tilh.tex_img_list_tag.to_bytes(4, BYTE_ORDER)
+    buf += tilh.tex_img_list_header_size.to_bytes(4, BYTE_ORDER)
+    buf += tilh.tex_img_list_size.to_bytes(4, BYTE_ORDER)
+    buf += tilh.tex_img_num.to_bytes(4, BYTE_ORDER)
+    buf += tilh.nintendo_extension_block_size.to_bytes(4, BYTE_ORDER)
+    buf += tilh.user_extension_block_size.to_bytes(4, BYTE_ORDER)
     return buf
 
 
@@ -731,8 +740,8 @@ class Niff2AnimListHeader:
         return 6*4
 
 
-def niff2_anim_list_header_builder(context):
-    alh = Niff2AnimListHeader
+def niff2_anim_list_header_builder(data):
+    alh = Niff2AnimListHeader()
     alh.anim_list_tag = TAG_ANIM_LIST
     alh.anim_list_header_size = 6*4
     alh.anim_list_size = 6*4
@@ -743,12 +752,12 @@ def niff2_anim_list_header_builder(context):
 
 
 def niff2_anim_list_header_writer(alh, buf):
-    buf += alh.anim_list_tag.to_bytes(4, byteorder='big')
-    buf += alh.anim_list_header_size.to_bytes(4, byteorder='big')
-    buf += alh.anim_list_size.to_bytes(4, byteorder='big')
-    buf += alh.anim_group_num.to_bytes(4, byteorder='big')
-    buf += alh.nintendo_extension_block_size.to_bytes(4, byteorder='big')
-    buf += alh.user_extension_block_size.to_bytes(4, byteorder='big')
+    buf += alh.anim_list_tag.to_bytes(4, BYTE_ORDER)
+    buf += alh.anim_list_header_size.to_bytes(4, BYTE_ORDER)
+    buf += alh.anim_list_size.to_bytes(4, BYTE_ORDER)
+    buf += alh.anim_group_num.to_bytes(4, BYTE_ORDER)
+    buf += alh.nintendo_extension_block_size.to_bytes(4, BYTE_ORDER)
+    buf += alh.user_extension_block_size.to_bytes(4, BYTE_ORDER)
     return buf
 
 
@@ -768,8 +777,8 @@ class Niff2CollListHeader:
         return 6*4
 
 
-def niff2_coll_list_header_builder(context):
-    clh = Niff2CollListHeader
+def niff2_coll_list_header_builder(data):
+    clh = Niff2CollListHeader()
     clh.coll_list_tag = TAG_COLL_LIST
     clh.coll_list_header_size = 6*4
     clh.coll_list_size = 6*4
@@ -780,12 +789,12 @@ def niff2_coll_list_header_builder(context):
 
 
 def niff2_coll_list_header_writer(clh, buf):
-    buf += clh.coll_list_tag.to_bytes(4, byteorder='big')
-    buf += clh.coll_list_header_size.to_bytes(4, byteorder='big')
-    buf += clh.coll_list_size.to_bytes(4, byteorder='big')
-    buf += clh.coll_group_num.to_bytes(4, byteorder='big')
-    buf += clh.nintendo_extension_block_size.to_bytes(4, byteorder='big')
-    buf += clh.user_extension_block_size.to_bytes(4, byteorder='big')
+    buf += clh.coll_list_tag.to_bytes(4, BYTE_ORDER)
+    buf += clh.coll_list_header_size.to_bytes(4, BYTE_ORDER)
+    buf += clh.coll_list_size.to_bytes(4, BYTE_ORDER)
+    buf += clh.coll_group_num.to_bytes(4, BYTE_ORDER)
+    buf += clh.nintendo_extension_block_size.to_bytes(4, BYTE_ORDER)
+    buf += clh.user_extension_block_size.to_bytes(4, BYTE_ORDER)
     return buf
 
 
@@ -805,8 +814,8 @@ class Niff2SwitchListHeader:
         return 6*4
 
 
-def niff2_switch_list_header_builder(context):
-    slh = Niff2SwitchListHeader
+def niff2_switch_list_header_builder(data):
+    slh = Niff2SwitchListHeader()
     slh.switch_list_tag = TAG_SWITCH_LIST
     slh.switch_list_header_size = 6*4
     slh.switch_list_size = 6*4
@@ -817,12 +826,12 @@ def niff2_switch_list_header_builder(context):
 
 
 def niff2_switch_list_header_writer(slh, buf):
-    buf += slh.switch_list_tag.to_bytes(4, byteorder='big')
-    buf += slh.switch_list_header_size.to_bytes(4, byteorder='big')
-    buf += slh.switch_list_size.to_bytes(4, byteorder='big')
-    buf += slh.switch_num.to_bytes(4, byteorder='big')
-    buf += slh.nintendo_extension_block_size.to_bytes(4, byteorder='big')
-    buf += slh.user_extension_block_size.to_bytes(4, byteorder='big')
+    buf += slh.switch_list_tag.to_bytes(4, BYTE_ORDER)
+    buf += slh.switch_list_header_size.to_bytes(4, BYTE_ORDER)
+    buf += slh.switch_list_size.to_bytes(4, BYTE_ORDER)
+    buf += slh.switch_num.to_bytes(4, BYTE_ORDER)
+    buf += slh.nintendo_extension_block_size.to_bytes(4, BYTE_ORDER)
+    buf += slh.user_extension_block_size.to_bytes(4, BYTE_ORDER)
     return buf
 
 
@@ -842,8 +851,8 @@ class Niff2NameListHeader:
         return 6*4
 
 
-def niff2_name_list_header_builder(context):
-    nlh = Niff2NameListHeader
+def niff2_name_list_header_builder(data):
+    nlh = Niff2NameListHeader()
     nlh.name_list_tag = TAG_NAME_LIST
     nlh.name_list_header_size = 6*4
     nlh.name_list_size = 6*4
@@ -854,40 +863,40 @@ def niff2_name_list_header_builder(context):
 
 
 def niff2_name_list_header_writer(nlh, buf):
-    buf += nlh.name_list_tag.to_bytes(4, byteorder='big')
-    buf += nlh.name_list_header_size.to_bytes(4, byteorder='big')
-    buf += nlh.name_list_size.to_bytes(4, byteorder='big')
-    buf += nlh.name_num.to_bytes(4, byteorder='big')
-    buf += nlh.nintendo_extension_block_size.to_bytes(4, byteorder='big')
-    buf += nlh.user_extension_block_size.to_bytes(4, byteorder='big')
+    buf += nlh.name_list_tag.to_bytes(4, BYTE_ORDER)
+    buf += nlh.name_list_header_size.to_bytes(4, BYTE_ORDER)
+    buf += nlh.name_list_size.to_bytes(4, BYTE_ORDER)
+    buf += nlh.name_num.to_bytes(4, BYTE_ORDER)
+    buf += nlh.nintendo_extension_block_size.to_bytes(4, BYTE_ORDER)
+    buf += nlh.user_extension_block_size.to_bytes(4, BYTE_ORDER)
     return buf
 
 
 #
 # Writer entry point
 #
-def write_niff2(context, filepath):
+def write_niff2(data, filepath):
     print("running write_niff2...")
 
-    scene_header = niff2_scene_header_builder(context, 0)
-    env_list_header = niff2_env_list_header_builder(context)
-    cam_list_header = niff2_cam_list_header_builder(context)
-    light_list_header = niff2_light_list_header_builder(context)
-    obj_list_header = niff2_obj_list_header_builder(context)
-    shape_list_header = niff2_shape_list_header_builder(context)
-    vtx_list_header = niff2_vtx_list_header_builder(context)
-    tri_list_header = niff2_tri_list_header_builder(context)
-    color_list_header = niff2_color_list_header_builder(context)
-    vector_list_header = niff2_vector_list_header_builder(context)
-    st_list_header = niff2_st_list_header_builder(context)
-    part_list_header = niff2_part_list_header_builder(context)
-    mat_list_header = niff2_mat_list_header_builder(context)
-    tex_list_header = niff2_tex_list_header_builder(context)
-    tex_img_list_header = niff2_tex_img_list_header_builder(context)
-    anim_list_header = niff2_anim_list_header_builder(context)
-    coll_list_header = niff2_coll_list_header_builder(context)
-    switch_list_header = niff2_switch_list_header_builder(context)
-    name_list_header = niff2_name_list_header_builder(context)
+    scene_header = niff2_scene_header_builder(data)
+    env_list_header = niff2_env_list_header_builder(data)
+    cam_list_header = niff2_cam_list_header_builder(data)
+    light_list_header = niff2_light_list_header_builder(data)
+    obj_list_header = niff2_obj_list_header_builder(data)
+    shape_list_header = niff2_shape_list_header_builder(data)
+    vtx_list_header = niff2_vtx_list_header_builder(data)
+    tri_list_header = niff2_tri_list_header_builder(data)
+    color_list_header = niff2_color_list_header_builder(data)
+    vector_list_header = niff2_vector_list_header_builder(data)
+    st_list_header = niff2_st_list_header_builder(data)
+    part_list_header = niff2_part_list_header_builder(data)
+    mat_list_header = niff2_mat_list_header_builder(data)
+    tex_list_header = niff2_tex_list_header_builder(data)
+    tex_img_list_header = niff2_tex_img_list_header_builder(data)
+    anim_list_header = niff2_anim_list_header_builder(data)
+    coll_list_header = niff2_coll_list_header_builder(data)
+    switch_list_header = niff2_switch_list_header_builder(data)
+    name_list_header = niff2_name_list_header_builder(data)
 
     file_size = 100 \
         + scene_header.num_bytes() \
@@ -910,7 +919,7 @@ def write_niff2(context, filepath):
         + switch_list_header.num_bytes() \
         + name_list_header.num_bytes()
 
-    fh = niff2_file_header_builder(context, file_size)
+    fh = niff2_file_header_builder(file_size)
     fh.scene_list_num_byte = scene_header.num_bytes()
     fh.env_list_num_byte = env_list_header.num_bytes()
     fh.cam_list_num_byte = cam_list_header.num_bytes()
@@ -967,7 +976,7 @@ bl_info = {
     "category": "Import-Export",
     "version": (0, 1),
     "blender": (2, 83, 0),
-    "location": "File > Export"
+    "location": "File > Export > N64 NIFF2 (.nif)"
 }
 
 
@@ -988,7 +997,7 @@ class N64Niff2Export(Operator, ExportHelper):
     )
 
     def execute(self, context):
-        return write_niff2(context, self.filepath)
+        return write_niff2(bpy.data, self.filepath)
 
 
 # Only needed if you want to add into a dynamic menu
