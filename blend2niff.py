@@ -32,6 +32,7 @@ TAG_ANIM_LIST = 0x000c0000
 TAG_COLL_LIST = 0x000d0000
 TAG_SWITCH_LIST = 0x00130000
 TAG_NAME_LIST = 0x00110000
+TAG_NAME = 0x00110100
 TAG_CI_IMG_LIST = 0x00200000
 TAG_COLOR_PALETTE_LIST = 0x00210000
 TAG_ENVELOPE_LIST = 0x00220000
@@ -227,14 +228,14 @@ class Niff2SceneHeader:
         return (11*4) + (5*4) + (self.scene_obj_link_num*4)
 
 
-def niff2_scene_header_builder(objs):
+def niff2_scene_header_builder(scene_name_index, objs):
     scene_obj_link_num = len(objs)
 
     sh = Niff2SceneHeader()
     sh.scene_header_tag = TAG_SCENE_HEADER
     sh.scene_header_size = 11*4
     sh.scene_cfg = SCENE_CFG_VIDEO_NTSC | SCENE_CFG_DIVOT | SCENE_CFG_DITHER
-    sh.scene_name_index = BAD_INDEX
+    sh.scene_name_index = scene_name_index
     sh.scene_obj_link_num = scene_obj_link_num
     sh.scene_env_link_num = 0
     sh.scene_cam_link_num = 0
@@ -1031,29 +1032,76 @@ class Niff2NameListHeader:
     nintendo_extension_block_size: int
     user_extension_block_size: int
 
-    @staticmethod
-    def num_bytes():
-        return 6*4
+    def num_bytes(self):
+        return self.name_list_size
 
 
-def niff2_name_list_header_builder(data):
+def niff2_name_list_header_builder(names):
+    name_num = len(names)
+    name_list_size = sum(map(lambda name: name.name_size, names))
+
     nlh = Niff2NameListHeader()
     nlh.name_list_tag = TAG_NAME_LIST
-    nlh.name_list_header_size = 6*4
-    nlh.name_list_size = 6*4
-    nlh.name_num = 0
+    nlh.name_list_header_size = (6*4) + (name_num*4)
+    nlh.name_list_size = (6*4) + (name_num*4) + name_list_size
+    nlh.name_num = name_num
     nlh.nintendo_extension_block_size = 0
     nlh.user_extension_block_size = 0
     return nlh
 
 
-def niff2_name_list_header_writer(nlh, buf):
+def niff2_name_list_header_writer(nlh, names, buf):
     buf += nlh.name_list_tag.to_bytes(4, BYTE_ORDER)
     buf += nlh.name_list_header_size.to_bytes(4, BYTE_ORDER)
     buf += nlh.name_list_size.to_bytes(4, BYTE_ORDER)
     buf += nlh.name_num.to_bytes(4, BYTE_ORDER)
     buf += nlh.nintendo_extension_block_size.to_bytes(4, BYTE_ORDER)
     buf += nlh.user_extension_block_size.to_bytes(4, BYTE_ORDER)
+
+    for name in names:
+        buf += name.name_size.to_bytes(4, BYTE_ORDER)
+
+    return buf
+
+
+#
+# Name Node
+#
+class Niff2NameNode:
+    name_tag: int
+    this_name_index: int
+    name_header_size: int
+    name_size: int
+    node_name: str
+
+    def index(self):
+        return self.this_name_index
+
+
+def niff2_name_node_builder(index, name):
+    name_size = len(name)
+    if ((name_size % 4) > 0):
+        name_size += 4-(name_size % 4)
+
+    node = Niff2NameNode()
+    node.name_tag = TAG_NAME
+    node.this_name_index = index
+    node.name_header_size = (4*4)
+    node.name_size = (4*4) + name_size
+    node.node_name = name
+    return node
+
+
+def niff2_name_node_writer(name, buf):
+    buf += name.name_tag.to_bytes(4, BYTE_ORDER)
+    buf += name.this_name_index.to_bytes(4, BYTE_ORDER)
+    buf += name.name_header_size.to_bytes(4, BYTE_ORDER)
+    buf += name.name_size.to_bytes(4, BYTE_ORDER)
+
+    buf += name.node_name.encode('ascii', 'ignore')
+    if ((len(name.node_name) % 4) > 0):
+        buf += (0).to_bytes(4-(len(name.node_name) % 4), BYTE_ORDER)
+
     return buf
 
 
@@ -1396,11 +1444,15 @@ def niff2_external_name_list_header_writer(enlh, buf):
 def write_niff2(data, filepath):
     print("running write_niff2...")
 
+    names = []
+    scene_name = niff2_name_node_builder(len(names), "SCENE")
+    names.append(scene_name)
+
     objs = []
     for index, mesh in zip(range(len(data.meshes)), data.meshes):
         objs.append(niff2_obj_node_builder(index, mesh))
 
-    scene_header = niff2_scene_header_builder(objs)
+    scene_header = niff2_scene_header_builder(scene_name.index(), objs)
     env_list_header = niff2_env_list_header_builder(data)
     cam_list_header = niff2_cam_list_header_builder(data)
     light_list_header = niff2_light_list_header_builder(data)
@@ -1418,7 +1470,7 @@ def write_niff2(data, filepath):
     anim_list_header = niff2_anim_list_header_builder(data)
     coll_list_header = niff2_coll_list_header_builder(data)
     switch_list_header = niff2_switch_list_header_builder(data)
-    name_list_header = niff2_name_list_header_builder(data)
+    name_list_header = niff2_name_list_header_builder(names)
     ci_img_list_header = niff2_ci_img_list_header_builder(data)
     color_palette_list_header = niff2_color_palette_list_header_builder(data)
     envelope_list_header = niff2_envelope_list_header_builder(data)
@@ -1513,7 +1565,11 @@ def write_niff2(data, filepath):
     niff2_anim_list_header_writer(anim_list_header, buf)
     niff2_coll_list_header_writer(coll_list_header, buf)
     niff2_switch_list_header_writer(switch_list_header, buf)
-    niff2_name_list_header_writer(name_list_header, buf)
+
+    niff2_name_list_header_writer(name_list_header, names, buf)
+    for name in names:
+        niff2_name_node_writer(name, buf)
+
     niff2_ci_img_list_header_writer(ci_img_list_header, buf)
     niff2_color_palette_list_header_writer(color_palette_list_header, buf)
     niff2_envelope_list_header_writer(envelope_list_header, buf)
