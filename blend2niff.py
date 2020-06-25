@@ -467,12 +467,12 @@ class Niff2ObjNode:
     external_obj_num: int
 
 
-def niff2_obj_node_builder(index, mesh):
+def niff2_obj_node_builder(obj_index, obj_name_index, mesh):
     obj = Niff2ObjNode()
     obj.obj_tag = TAG_OBJ
-    obj.this_obj_index = index
+    obj.this_obj_index = obj_index
     obj.obj_size = (22*4) + (7*4)
-    obj.obj_name_index = BAD_INDEX
+    obj.obj_name_index = obj_name_index
     obj.obj_state = OBJ_STATE_ACTIVE
     obj.obj_type = OBJ_TYPE_3D
     obj.obj_group = BAD_INDEX
@@ -1445,12 +1445,16 @@ def write_niff2(data, filepath):
     print("running write_niff2...")
 
     names = []
-    scene_name = niff2_name_node_builder(len(names), "SCENE")
+    scene_name = niff2_name_node_builder(
+        len(names), bpy.path.display_name_from_filepath(filepath))
     names.append(scene_name)
 
     objs = []
-    for index, mesh in zip(range(len(data.meshes)), data.meshes):
-        objs.append(niff2_obj_node_builder(index, mesh))
+    for obj_index, mesh in zip(range(len(data.meshes)), data.meshes):
+        obj_name = niff2_name_node_builder(len(names), mesh.name)
+        names.append(obj_name)
+        obj = niff2_obj_node_builder(obj_index, obj_name.index(), mesh)
+        objs.append(obj)
 
     scene_header = niff2_scene_header_builder(scene_name.index(), objs)
     env_list_header = niff2_env_list_header_builder(data)
