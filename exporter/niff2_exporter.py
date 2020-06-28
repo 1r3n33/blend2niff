@@ -2,11 +2,12 @@ import bpy
 from bpy_extras.io_utils import ExportHelper
 from bpy.props import StringProperty
 from bpy.types import Operator
+from .niff2_shape import *
 
 #
 # Consts
 #
-MAKER_CODE = 0xFF
+MAKER_CODE = 0xFFd
 TOOL_CODE = 0x00
 NIFF_MAJOR_VERSION = 0x02
 NIFF_MINOR_VERSION = 0x00
@@ -18,7 +19,6 @@ TAG_CAM_LIST = 0x000e0000
 TAG_LIGHT_LIST = 0x000f0000
 TAG_OBJ_LIST = 0x00020000
 TAG_OBJ = 0x00020100
-TAG_SHAPE_LIST = 0x00030000
 TAG_VTX_LIST = 0x00040000
 TAG_TRI_LIST = 0x00080000
 TAG_COLOR_LIST = 0x00050000
@@ -531,43 +531,6 @@ def niff2_obj_node_writer(obj, buf):
     buf += obj.obj_chain_root_link_num.to_bytes(4, BYTE_ORDER)
     buf += obj.external_obj_lod_num.to_bytes(4, BYTE_ORDER)
     buf += obj.external_obj_num.to_bytes(4, BYTE_ORDER)
-    return buf
-
-
-#
-# Shape List
-#
-class Niff2ShapeListHeader:
-    shape_list_tag: int
-    shape_list_header_size: int
-    shape_list_size: int
-    shape_num: int
-    nintendo_extension_block_size: int
-    user_extension_block_size: int
-
-    @staticmethod
-    def num_bytes():
-        return 6*4
-
-
-def niff2_shape_list_header_builder(data):
-    slh = Niff2ShapeListHeader()
-    slh.shape_list_tag = TAG_SHAPE_LIST
-    slh.shape_list_header_size = 6*4
-    slh.shape_list_size = 6*4
-    slh.shape_num = 0
-    slh.nintendo_extension_block_size = 0
-    slh.user_extension_block_size = 0
-    return slh
-
-
-def niff2_shape_list_header_writer(slh, buf):
-    buf += slh.shape_list_tag.to_bytes(4, BYTE_ORDER)
-    buf += slh.shape_list_header_size.to_bytes(4, BYTE_ORDER)
-    buf += slh.shape_list_size.to_bytes(4, BYTE_ORDER)
-    buf += slh.shape_num.to_bytes(4, BYTE_ORDER)
-    buf += slh.nintendo_extension_block_size.to_bytes(4, BYTE_ORDER)
-    buf += slh.user_extension_block_size.to_bytes(4, BYTE_ORDER)
     return buf
 
 
@@ -1456,12 +1419,19 @@ def write_niff2(data, filepath):
         obj = niff2_obj_node_builder(obj_index, obj_name.index(), mesh)
         objs.append(obj)
 
+    shapes = []
+    for shape_index, mesh in zip(range(len(data.meshes)), data.meshes):
+        shape_name = niff2_name_node_builder(len(names), mesh.name)
+        names.append(shape_name)
+        shape = niff2_shape_node_builder(shape_index, shape_name.index(), mesh)
+        shapes.append(shape)
+
     scene_header = niff2_scene_header_builder(scene_name.index(), objs)
     env_list_header = niff2_env_list_header_builder(data)
     cam_list_header = niff2_cam_list_header_builder(data)
     light_list_header = niff2_light_list_header_builder(data)
     obj_list_header = niff2_obj_list_header_builder(objs)
-    shape_list_header = niff2_shape_list_header_builder(data)
+    shape_list_header = niff2_shape_list_header_builder(shapes)
     vtx_list_header = niff2_vtx_list_header_builder(data)
     tri_list_header = niff2_tri_list_header_builder(data)
     color_list_header = niff2_color_list_header_builder(data)
@@ -1556,7 +1526,10 @@ def write_niff2(data, filepath):
     for obj in objs:
         niff2_obj_node_writer(obj, buf)
 
-    niff2_shape_list_header_writer(shape_list_header, buf)
+    niff2_shape_list_header_writer(shape_list_header, shapes, buf)
+    for shape in shapes:
+        niff2_shape_node_writer(shape, buf)
+
     niff2_vtx_list_header_writer(vtx_list_header, buf)
     niff2_tri_list_header_writer(tri_list_header, buf)
     niff2_color_list_header_writer(color_list_header, buf)
@@ -1591,17 +1564,6 @@ def write_niff2(data, filepath):
     return {'FINISHED'}
 
 
-bl_info = {
-    "name": "N64 NIFF2 Exporter",
-    "description": "Export to N64 NIFF2 format",
-    "author": "https://github.com/1r3n33",
-    "category": "Import-Export",
-    "version": (0, 1),
-    "blender": (2, 83, 0),
-    "location": "File > Export > N64 NIFF2 (.nif)"
-}
-
-
 class N64Niff2Export(Operator, ExportHelper):
     """Export to N64 NIFF2 format"""
 
@@ -1620,25 +1582,3 @@ class N64Niff2Export(Operator, ExportHelper):
 
     def execute(self, context):
         return write_niff2(bpy.data, self.filepath)
-
-
-# Only needed if you want to add into a dynamic menu
-def menu_func_export(self, context):
-    self.layout.operator(N64Niff2Export.bl_idname, text="N64 NIFF2 (.nif)")
-
-
-def register():
-    bpy.utils.register_class(N64Niff2Export)
-    bpy.types.TOPBAR_MT_file_export.append(menu_func_export)
-
-
-def unregister():
-    bpy.utils.unregister_class(N64Niff2Export)
-    bpy.types.TOPBAR_MT_file_export.remove(menu_func_export)
-
-
-if __name__ == "__main__":
-    register()
-
-    # test call
-    bpy.ops.export.to_n64_niff2('INVOKE_DEFAULT')
