@@ -83,8 +83,11 @@ class Niff2ShapeNode:
     external_mat_file_name_index: int
     external_mat_name_index: int
 
+    def index(self):
+        return self.this_shape_index
 
-def niff2_shape_node_builder(shape_index, shape_name_index, mesh):
+
+def niff2_shape_node_builder(shape_index, shape_name_index, _):
     part_num = 0
 
     shape = Niff2ShapeNode()

@@ -111,7 +111,7 @@ class Niff2ObjNode:
     external_obj_num: int
 
 
-def niff2_obj_node_builder(obj_index, obj_name_index, mesh):
+def niff2_obj_node_builder(obj_index, obj_name_index, obj_shape_index):
     obj = Niff2ObjNode()
     obj.obj_tag = TAG_OBJ
     obj.this_obj_index = obj_index
@@ -129,7 +129,7 @@ def niff2_obj_node_builder(obj_index, obj_name_index, mesh):
     obj.obj_lod_num = 0
     obj.obj_child_num = 0
     obj.obj_parent_link = BAD_INDEX
-    obj.obj_shape_link = BAD_INDEX
+    obj.obj_shape_link = obj_shape_index
     obj.obj_mat_link = BAD_INDEX
     obj.obj_anim_link = BAD_INDEX
     obj.obj_coll_link = BAD_INDEX

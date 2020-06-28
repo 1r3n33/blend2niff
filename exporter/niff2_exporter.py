@@ -1157,19 +1157,22 @@ def write_niff2(data, filepath):
         len(names), bpy.path.display_name_from_filepath(filepath))
     names.append(scene_name)
 
-    objs = []
-    for obj_index, mesh in zip(range(len(data.meshes)), data.meshes):
-        obj_name = niff2_name_node_builder(len(names), mesh.name)
-        names.append(obj_name)
-        obj = niff2_obj_node_builder(obj_index, obj_name.index(), mesh)
-        objs.append(obj)
-
+    # NIFF2 Shape <-> Blender Mesh
     shapes = []
     for shape_index, mesh in zip(range(len(data.meshes)), data.meshes):
         shape_name = niff2_name_node_builder(len(names), mesh.name)
         names.append(shape_name)
         shape = niff2_shape_node_builder(shape_index, shape_name.index(), mesh)
         shapes.append(shape)
+
+    # NIFF2 Obj <-> Blender Obj
+    objs = []
+    for obj_index, mesh, shape in zip(range(len(data.meshes)), data.meshes, shapes):
+        obj_name = niff2_name_node_builder(len(names), mesh.name)
+        names.append(obj_name)
+        obj = niff2_obj_node_builder(
+            obj_index, obj_name.index(), shape.index())
+        objs.append(obj)
 
     scene_header = niff2_scene_header_builder(scene_name.index(), objs)
     env_list_header = niff2_env_list_header_builder(data)
