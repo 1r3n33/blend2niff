@@ -87,8 +87,8 @@ class Niff2ShapeNode:
         return self.this_shape_index
 
 
-def niff2_shape_node_builder(shape_index, shape_name_index, _):
-    part_num = 0
+def niff2_shape_node_builder(shape_index, shape_name_index):
+    part_num = 1
 
     shape = Niff2ShapeNode()
     shape.shape_tag = TAG_SHAPE
@@ -107,7 +107,7 @@ def niff2_shape_node_builder(shape_index, shape_name_index, _):
     return shape
 
 
-def niff2_shape_node_writer(shape, buf):
+def niff2_shape_node_writer(shape, part_index, buf):
     buf += shape.shape_tag.to_bytes(4, BYTE_ORDER)
     buf += shape.this_shape_index.to_bytes(4, BYTE_ORDER)
     buf += shape.shape_size.to_bytes(4, BYTE_ORDER)
@@ -118,6 +118,7 @@ def niff2_shape_node_writer(shape, buf):
     buf += shape.shape_part_num.to_bytes(4, BYTE_ORDER)
     buf += shape.nintendo_extension_block_size.to_bytes(4, BYTE_ORDER)
     buf += shape.user_extension_block_size.to_bytes(4, BYTE_ORDER)
+    buf += part_index.to_bytes(4, BYTE_ORDER)
     buf += shape.kind_of_node_for_geometry.to_bytes(4, BYTE_ORDER)
     buf += shape.external_mat_file_name_index.to_bytes(4, BYTE_ORDER)
     buf += shape.external_mat_name_index.to_bytes(4, BYTE_ORDER)

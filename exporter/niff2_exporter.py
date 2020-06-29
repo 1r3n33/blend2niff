@@ -2,9 +2,14 @@ import bpy
 from bpy_extras.io_utils import ExportHelper
 from bpy.props import StringProperty
 from bpy.types import Operator
-from .niff2_name import *
-from .niff2_obj import *
-from .niff2_shape import *
+from .niff2_name import (niff2_name_list_header_builder, niff2_name_list_header_writer,
+                         niff2_name_node_builder, niff2_name_node_writer)
+from .niff2_obj import (niff2_obj_list_header_builder,
+                        niff2_obj_list_header_writer, niff2_obj_node_builder, niff2_obj_node_writer)
+from .niff2_part import (niff2_part_list_header_builder, niff2_part_list_header_writer,
+                         niff2_part_node_builder, niff2_part_node_writer)
+from .niff2_shape import (niff2_shape_list_header_builder, niff2_shape_list_header_writer,
+                          niff2_shape_node_builder, niff2_shape_node_writer)
 
 #
 # Consts
@@ -24,7 +29,6 @@ TAG_TRI_LIST = 0x00080000
 TAG_COLOR_LIST = 0x00050000
 TAG_VECTOR_LIST = 0x00060000
 TAG_ST_LIST = 0x00070000
-TAG_PART_LIST = 0x00090000
 TAG_MAT_LIST = 0x000a0000
 TAG_TEX_LIST = 0x000b0000
 TAG_TEX_IMG_LIST = 0x00120000
@@ -551,43 +555,6 @@ def niff2_st_list_header_writer(stlh, buf):
     buf += stlh.st_group_num.to_bytes(4, BYTE_ORDER)
     buf += stlh.nintendo_extension_block_size.to_bytes(4, BYTE_ORDER)
     buf += stlh.user_extension_block_size.to_bytes(4, BYTE_ORDER)
-    return buf
-
-
-#
-# Part List
-#
-class Niff2PartListHeader:
-    part_list_tag: int
-    part_list_header_size: int
-    part_list_size: int
-    part_num: int
-    nintendo_extension_block_size: int
-    user_extension_block_size: int
-
-    @staticmethod
-    def num_bytes():
-        return 6*4
-
-
-def niff2_part_list_header_builder(data):
-    plh = Niff2PartListHeader()
-    plh.part_list_tag = TAG_PART_LIST
-    plh.part_list_header_size = 6*4
-    plh.part_list_size = 6*4
-    plh.part_num = 0
-    plh.nintendo_extension_block_size = 0
-    plh.user_extension_block_size = 0
-    return plh
-
-
-def niff2_part_list_header_writer(plh, buf):
-    buf += plh.part_list_tag.to_bytes(4, BYTE_ORDER)
-    buf += plh.part_list_header_size.to_bytes(4, BYTE_ORDER)
-    buf += plh.part_list_size.to_bytes(4, BYTE_ORDER)
-    buf += plh.part_num.to_bytes(4, BYTE_ORDER)
-    buf += plh.nintendo_extension_block_size.to_bytes(4, BYTE_ORDER)
-    buf += plh.user_extension_block_size.to_bytes(4, BYTE_ORDER)
     return buf
 
 
@@ -1157,12 +1124,20 @@ def write_niff2(data, filepath):
         len(names), bpy.path.display_name_from_filepath(filepath))
     names.append(scene_name)
 
-    # NIFF2 Shape <-> Blender Mesh
+    # NIFF2 Part <-> Blender Mesh
+    parts = []
+    for part_index, mesh in zip(range(len(data.meshes)), data.meshes):
+        part_name = niff2_name_node_builder(len(names), mesh.name)
+        names.append(part_name)
+        part = niff2_part_node_builder(part_index, part_name.index())
+        parts.append(part)
+
+    # NIFF2 Shape <-> Blender Mesh (1 part per shape)
     shapes = []
     for shape_index, mesh in zip(range(len(data.meshes)), data.meshes):
         shape_name = niff2_name_node_builder(len(names), mesh.name)
         names.append(shape_name)
-        shape = niff2_shape_node_builder(shape_index, shape_name.index(), mesh)
+        shape = niff2_shape_node_builder(shape_index, shape_name.index())
         shapes.append(shape)
 
     # NIFF2 Obj <-> Blender Obj
@@ -1185,7 +1160,7 @@ def write_niff2(data, filepath):
     color_list_header = niff2_color_list_header_builder(data)
     vector_list_header = niff2_vector_list_header_builder(data)
     st_list_header = niff2_st_list_header_builder(data)
-    part_list_header = niff2_part_list_header_builder(data)
+    part_list_header = niff2_part_list_header_builder(parts)
     mat_list_header = niff2_mat_list_header_builder(data)
     tex_list_header = niff2_tex_list_header_builder(data)
     tex_img_list_header = niff2_tex_img_list_header_builder(data)
@@ -1275,15 +1250,19 @@ def write_niff2(data, filepath):
         niff2_obj_node_writer(obj, buf)
 
     niff2_shape_list_header_writer(shape_list_header, shapes, buf)
-    for shape in shapes:
-        niff2_shape_node_writer(shape, buf)
+    for shape, part in zip(shapes, parts):
+        niff2_shape_node_writer(shape, part.index(), buf)
 
     niff2_vtx_list_header_writer(vtx_list_header, buf)
     niff2_tri_list_header_writer(tri_list_header, buf)
     niff2_color_list_header_writer(color_list_header, buf)
     niff2_vector_list_header_writer(vector_list_header, buf)
     niff2_st_list_header_writer(st_list_header, buf)
-    niff2_part_list_header_writer(part_list_header, buf)
+
+    niff2_part_list_header_writer(part_list_header, parts, buf)
+    for part in parts:
+        niff2_part_node_writer(part, buf)
+
     niff2_mat_list_header_writer(mat_list_header, buf)
     niff2_tex_list_header_writer(tex_list_header, buf)
     niff2_tex_img_list_header_writer(tex_img_list_header, buf)
