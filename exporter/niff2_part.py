@@ -72,14 +72,14 @@ class Niff2PartNode:
         return self.this_part_index
 
 
-def niff2_part_node_builder(part_index, part_name_index):
+def niff2_part_node_builder(part_index, part_name_index, tri_group_index):
     part = Niff2PartNode()
     part.part_tag = TAG_PART
     part.this_part_index = part_index
     part.part_size = 9*4
     part.part_name_index = part_name_index
     part.mat_index = BAD_INDEX  # Cannot set USE_SHAPE_MAT if shape.mat_index is BAD_INDEX
-    part.tri_group_index = BAD_INDEX
+    part.tri_group_index = tri_group_index
     part.part_tri_num = 0
     part.nintendo_extension_block_size = 0
     part.user_extension_block_size = 0
@@ -96,3 +96,4 @@ def niff2_part_node_writer(part, buf):
     buf += part.part_tri_num.to_bytes(4, BYTE_ORDER)
     buf += part.nintendo_extension_block_size.to_bytes(4, BYTE_ORDER)
     buf += part.user_extension_block_size.to_bytes(4, BYTE_ORDER)
+    return buf

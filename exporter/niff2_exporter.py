@@ -10,6 +10,8 @@ from .niff2_part import (niff2_part_list_header_builder, niff2_part_list_header_
                          niff2_part_node_builder, niff2_part_node_writer)
 from .niff2_shape import (niff2_shape_list_header_builder, niff2_shape_list_header_writer,
                           niff2_shape_node_builder, niff2_shape_node_writer)
+from .niff2_tri import (niff2_tri_list_header_builder, niff2_tri_list_header_writer,
+                        niff2_tri_group_node_builder, niff2_tri_group_node_writer)
 
 #
 # Consts
@@ -25,7 +27,6 @@ TAG_ENV_LIST = 0x00100000
 TAG_CAM_LIST = 0x000e0000
 TAG_LIGHT_LIST = 0x000f0000
 TAG_VTX_LIST = 0x00040000
-TAG_TRI_LIST = 0x00080000
 TAG_COLOR_LIST = 0x00050000
 TAG_VECTOR_LIST = 0x00060000
 TAG_ST_LIST = 0x00070000
@@ -401,43 +402,6 @@ def niff2_vtx_list_header_writer(vlh, buf):
     buf += vlh.vtx_group_num.to_bytes(4, BYTE_ORDER)
     buf += vlh.nintendo_extension_block_size.to_bytes(4, BYTE_ORDER)
     buf += vlh.user_extension_block_size.to_bytes(4, BYTE_ORDER)
-    return buf
-
-
-#
-# Tri List
-#
-class Niff2TriListHeader:
-    tri_list_tag: int
-    tri_list_header_size: int
-    tri_list_size: int
-    tri_goup_num: int
-    nintendo_extension_block_size: int
-    user_extension_block_size: int
-
-    @staticmethod
-    def num_bytes():
-        return 6*4
-
-
-def niff2_tri_list_header_builder(data):
-    tlh = Niff2TriListHeader()
-    tlh.tri_list_tag = TAG_TRI_LIST
-    tlh.tri_list_header_size = 6*4
-    tlh.tri_list_size = 6*4
-    tlh.tri_group_num = 0
-    tlh.nintendo_extension_block_size = 0
-    tlh.user_extension_block_size = 0
-    return tlh
-
-
-def niff2_tri_list_header_writer(tlh, buf):
-    buf += tlh.tri_list_tag.to_bytes(4, BYTE_ORDER)
-    buf += tlh.tri_list_header_size.to_bytes(4, BYTE_ORDER)
-    buf += tlh.tri_list_size.to_bytes(4, BYTE_ORDER)
-    buf += tlh.tri_group_num.to_bytes(4, BYTE_ORDER)
-    buf += tlh.nintendo_extension_block_size.to_bytes(4, BYTE_ORDER)
-    buf += tlh.user_extension_block_size.to_bytes(4, BYTE_ORDER)
     return buf
 
 
@@ -1124,20 +1088,31 @@ def write_niff2(data, filepath):
         len(names), bpy.path.display_name_from_filepath(filepath))
     names.append(scene_name)
 
-    # NIFF2 Part <-> Blender Mesh
+    # NIFF2 TriGroup <-> Blender Mesh (1 tri_group per part)
+    tri_groups = []
+    for tri_group_index, mesh in zip(range(len(data.meshes)), data.meshes):
+        tri_group_name = niff2_name_node_builder(len(names), mesh.name)
+        names.append(tri_group_name)
+        tri_group = niff2_tri_group_node_builder(
+            tri_group_index, tri_group_name.index())
+        tri_groups.append(tri_group)
+
+    # NIFF2 Part <-> Blender Mesh (1 part per shape)
     parts = []
-    for part_index, mesh in zip(range(len(data.meshes)), data.meshes):
+    for part_index, mesh, tri_group in zip(range(len(data.meshes)), data.meshes, tri_groups):
         part_name = niff2_name_node_builder(len(names), mesh.name)
         names.append(part_name)
-        part = niff2_part_node_builder(part_index, part_name.index())
+        part = niff2_part_node_builder(
+            part_index, part_name.index(), tri_group.index())
         parts.append(part)
 
-    # NIFF2 Shape <-> Blender Mesh (1 part per shape)
+    # NIFF2 Shape <-> Blender Mesh
     shapes = []
-    for shape_index, mesh in zip(range(len(data.meshes)), data.meshes):
+    for shape_index, mesh, tri_group in zip(range(len(data.meshes)), data.meshes, tri_groups):
         shape_name = niff2_name_node_builder(len(names), mesh.name)
         names.append(shape_name)
-        shape = niff2_shape_node_builder(shape_index, shape_name.index())
+        shape = niff2_shape_node_builder(
+            shape_index, shape_name.index(), tri_group.index())
         shapes.append(shape)
 
     # NIFF2 Obj <-> Blender Obj
@@ -1156,7 +1131,7 @@ def write_niff2(data, filepath):
     obj_list_header = niff2_obj_list_header_builder(objs)
     shape_list_header = niff2_shape_list_header_builder(shapes)
     vtx_list_header = niff2_vtx_list_header_builder(data)
-    tri_list_header = niff2_tri_list_header_builder(data)
+    tri_list_header = niff2_tri_list_header_builder(tri_groups)
     color_list_header = niff2_color_list_header_builder(data)
     vector_list_header = niff2_vector_list_header_builder(data)
     st_list_header = niff2_st_list_header_builder(data)
@@ -1254,7 +1229,11 @@ def write_niff2(data, filepath):
         niff2_shape_node_writer(shape, part.index(), buf)
 
     niff2_vtx_list_header_writer(vtx_list_header, buf)
-    niff2_tri_list_header_writer(tri_list_header, buf)
+
+    niff2_tri_list_header_writer(tri_list_header, tri_groups, buf)
+    for tri_group in tri_groups:
+        niff2_tri_group_node_writer(tri_group, buf)
+
     niff2_color_list_header_writer(color_list_header, buf)
     niff2_vector_list_header_writer(vector_list_header, buf)
     niff2_st_list_header_writer(st_list_header, buf)
@@ -1292,7 +1271,8 @@ def write_niff2(data, filepath):
 
 
 class N64Niff2Export(Operator, ExportHelper):
-    """Export to N64 NIFF2 format"""
+
+    """Blender operator to export to N64 NIFF2 format"""
 
     # important since its how bpy.ops.export.to_n64_niff2 is constructed
     bl_idname = "export.to_n64_niff2"
