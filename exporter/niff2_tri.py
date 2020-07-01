@@ -30,7 +30,7 @@ class Niff2TriListHeader:
     tri_list_tag: int
     tri_list_header_size: int
     tri_list_size: int
-    tri_goup_num: int
+    tri_group_num: int
     nintendo_extension_block_size: int
     user_extension_block_size: int
 
