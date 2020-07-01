@@ -12,6 +12,8 @@ from .niff2_shape import (niff2_shape_list_header_builder, niff2_shape_list_head
                           niff2_shape_node_builder, niff2_shape_node_writer)
 from .niff2_tri import (niff2_tri_list_header_builder, niff2_tri_list_header_writer,
                         niff2_tri_group_node_builder, niff2_tri_group_node_writer)
+from .niff2_vtx import (niff2_vtx_list_header_builder,
+                        niff2_vtx_list_header_writer)
 
 #
 # Consts
@@ -26,7 +28,6 @@ TAG_SCENE_HEADER = 0x00010000
 TAG_ENV_LIST = 0x00100000
 TAG_CAM_LIST = 0x000e0000
 TAG_LIGHT_LIST = 0x000f0000
-TAG_VTX_LIST = 0x00040000
 TAG_COLOR_LIST = 0x00050000
 TAG_VECTOR_LIST = 0x00060000
 TAG_ST_LIST = 0x00070000
@@ -365,43 +366,6 @@ def niff2_light_list_header_writer(llh, buf):
     buf += llh.light_num.to_bytes(4, BYTE_ORDER)
     buf += llh.nintendo_extension_block_size.to_bytes(4, BYTE_ORDER)
     buf += llh.user_extension_block_size.to_bytes(4, BYTE_ORDER)
-    return buf
-
-
-#
-# Vtx List
-#
-class Niff2VtxListHeader:
-    vtx_list_tag: int
-    vtx_list_header_size: int
-    vtx_list_size: int
-    vtx_group_num: int
-    nintendo_extension_block_size: int
-    user_extension_block_size: int
-
-    @staticmethod
-    def num_bytes():
-        return 6*4
-
-
-def niff2_vtx_list_header_builder(data):
-    vlh = Niff2VtxListHeader()
-    vlh.vtx_list_tag = TAG_VTX_LIST
-    vlh.vtx_list_header_size = 6*4
-    vlh.vtx_list_size = 6*4
-    vlh.vtx_group_num = 0
-    vlh.nintendo_extension_block_size = 0
-    vlh.user_extension_block_size = 0
-    return vlh
-
-
-def niff2_vtx_list_header_writer(vlh, buf):
-    buf += vlh.vtx_list_tag.to_bytes(4, BYTE_ORDER)
-    buf += vlh.vtx_list_header_size.to_bytes(4, BYTE_ORDER)
-    buf += vlh.vtx_list_size.to_bytes(4, BYTE_ORDER)
-    buf += vlh.vtx_group_num.to_bytes(4, BYTE_ORDER)
-    buf += vlh.nintendo_extension_block_size.to_bytes(4, BYTE_ORDER)
-    buf += vlh.user_extension_block_size.to_bytes(4, BYTE_ORDER)
     return buf
 
 
@@ -1130,7 +1094,7 @@ def write_niff2(data, filepath):
     light_list_header = niff2_light_list_header_builder(data)
     obj_list_header = niff2_obj_list_header_builder(objs)
     shape_list_header = niff2_shape_list_header_builder(shapes)
-    vtx_list_header = niff2_vtx_list_header_builder(data)
+    vtx_list_header = niff2_vtx_list_header_builder()
     tri_list_header = niff2_tri_list_header_builder(tri_groups)
     color_list_header = niff2_color_list_header_builder(data)
     vector_list_header = niff2_vector_list_header_builder(data)
@@ -1271,7 +1235,6 @@ def write_niff2(data, filepath):
 
 
 class N64Niff2Export(Operator, ExportHelper):
-
     """Blender operator to export to N64 NIFF2 format"""
 
     # important since its how bpy.ops.export.to_n64_niff2 is constructed
