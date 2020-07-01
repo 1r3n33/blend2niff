@@ -12,8 +12,8 @@ from .niff2_shape import (niff2_shape_list_header_builder, niff2_shape_list_head
                           niff2_shape_node_builder, niff2_shape_node_writer)
 from .niff2_tri import (niff2_tri_list_header_builder, niff2_tri_list_header_writer,
                         niff2_tri_group_node_builder, niff2_tri_group_node_writer)
-from .niff2_vtx import (niff2_vtx_list_header_builder,
-                        niff2_vtx_list_header_writer)
+from .niff2_vtx import (niff2_vtx_list_header_builder, niff2_vtx_list_header_writer,
+                        niff2_vtx_group_node_builder, niff2_vtx_group_node_writer)
 
 #
 # Consts
@@ -1052,19 +1052,28 @@ def write_niff2(data, filepath):
         len(names), bpy.path.display_name_from_filepath(filepath))
     names.append(scene_name)
 
+    # NIFF2 Vtxgroup <-> Blender Mesh (1 vtx_group per part)
+    vtx_groups = []
+    for vtx_group_index, mesh in zip(range(len(data.meshes)), data.meshes):
+        vtx_group_name = niff2_name_node_builder(len(names), mesh.name+".vtx")
+        names.append(vtx_group_name)
+        vtx_group = niff2_vtx_group_node_builder(
+            vtx_group_index, vtx_group_name.index())
+        vtx_groups.append(vtx_group)
+
     # NIFF2 TriGroup <-> Blender Mesh (1 tri_group per part)
     tri_groups = []
-    for tri_group_index, mesh in zip(range(len(data.meshes)), data.meshes):
-        tri_group_name = niff2_name_node_builder(len(names), mesh.name)
+    for tri_group_index, mesh, vtx_group in zip(range(len(data.meshes)), data.meshes, vtx_groups):
+        tri_group_name = niff2_name_node_builder(len(names), mesh.name+".tri")
         names.append(tri_group_name)
         tri_group = niff2_tri_group_node_builder(
-            tri_group_index, tri_group_name.index())
+            tri_group_index, tri_group_name.index(), vtx_group.index())
         tri_groups.append(tri_group)
 
     # NIFF2 Part <-> Blender Mesh (1 part per shape)
     parts = []
     for part_index, mesh, tri_group in zip(range(len(data.meshes)), data.meshes, tri_groups):
-        part_name = niff2_name_node_builder(len(names), mesh.name)
+        part_name = niff2_name_node_builder(len(names), mesh.name+".part")
         names.append(part_name)
         part = niff2_part_node_builder(
             part_index, part_name.index(), tri_group.index())
@@ -1073,7 +1082,7 @@ def write_niff2(data, filepath):
     # NIFF2 Shape <-> Blender Mesh
     shapes = []
     for shape_index, mesh, tri_group in zip(range(len(data.meshes)), data.meshes, tri_groups):
-        shape_name = niff2_name_node_builder(len(names), mesh.name)
+        shape_name = niff2_name_node_builder(len(names), mesh.name+".shape")
         names.append(shape_name)
         shape = niff2_shape_node_builder(
             shape_index, shape_name.index(), tri_group.index())
@@ -1082,7 +1091,7 @@ def write_niff2(data, filepath):
     # NIFF2 Obj <-> Blender Obj
     objs = []
     for obj_index, mesh, shape in zip(range(len(data.meshes)), data.meshes, shapes):
-        obj_name = niff2_name_node_builder(len(names), mesh.name)
+        obj_name = niff2_name_node_builder(len(names), mesh.name+".obj")
         names.append(obj_name)
         obj = niff2_obj_node_builder(
             obj_index, obj_name.index(), shape.index())
@@ -1094,7 +1103,7 @@ def write_niff2(data, filepath):
     light_list_header = niff2_light_list_header_builder(data)
     obj_list_header = niff2_obj_list_header_builder(objs)
     shape_list_header = niff2_shape_list_header_builder(shapes)
-    vtx_list_header = niff2_vtx_list_header_builder()
+    vtx_list_header = niff2_vtx_list_header_builder(vtx_groups)
     tri_list_header = niff2_tri_list_header_builder(tri_groups)
     color_list_header = niff2_color_list_header_builder(data)
     vector_list_header = niff2_vector_list_header_builder(data)
@@ -1192,7 +1201,9 @@ def write_niff2(data, filepath):
     for shape, part in zip(shapes, parts):
         niff2_shape_node_writer(shape, part.index(), buf)
 
-    niff2_vtx_list_header_writer(vtx_list_header, buf)
+    niff2_vtx_list_header_writer(vtx_list_header, vtx_groups, buf)
+    for vtx_group in vtx_groups:
+        niff2_vtx_group_node_writer(vtx_group, buf)
 
     niff2_tri_list_header_writer(tri_list_header, tri_groups, buf)
     for tri_group in tri_groups:

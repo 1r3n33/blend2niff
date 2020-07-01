@@ -90,7 +90,7 @@ class Niff2TriGroupNode:
         return self.this_tri_group_index
 
 
-def niff2_tri_group_node_builder(tri_group_index, tri_group_name_index):
+def niff2_tri_group_node_builder(tri_group_index, tri_group_name_index, vtx_group_index):
     tri_group = Niff2TriGroupNode()
     tri_group.tri_group_tag = TAG_TRI_GROUP
     tri_group.this_tri_group_index = tri_group_index
@@ -100,7 +100,7 @@ def niff2_tri_group_node_builder(tri_group_index, tri_group_name_index):
     tri_group.tri_anim_type = TRI_ANIM_NONE
     tri_group.tri_anim_frame_num = 0
     tri_group.tri_num = 0
-    tri_group.vtx_group_index = BAD_INDEX
+    tri_group.vtx_group_index = vtx_group_index
     tri_group.tri_color_group_index = BAD_INDEX
     tri_group.vtx_color_group_index = BAD_INDEX
     tri_group.tri_nv_group_index = BAD_INDEX
