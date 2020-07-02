@@ -274,7 +274,7 @@ class Niff2EnvListHeader:
         return 6*4
 
 
-def niff2_env_list_header_builder(data):
+def niff2_env_list_header_builder():
     elh = Niff2EnvListHeader()
     elh.env_list_tag = TAG_ENV_LIST
     elh.env_list_header_size = 6*4
@@ -311,7 +311,7 @@ class Niff2CamListHeader:
         return 6*4
 
 
-def niff2_cam_list_header_builder(data):
+def niff2_cam_list_header_builder():
     clh = Niff2CamListHeader()
     clh.cam_list_tag = TAG_CAM_LIST
     clh.cam_list_header_size = 6*4
@@ -348,7 +348,7 @@ class Niff2LightListHeader:
         return 6*4
 
 
-def niff2_light_list_header_builder(data):
+def niff2_light_list_header_builder():
     llh = Niff2LightListHeader()
     llh.light_list_tag = TAG_LIGHT_LIST
     llh.light_list_header_size = 6*4
@@ -386,7 +386,7 @@ class Niff2ColorListHeader:
         return 7*4
 
 
-def niff2_color_list_header_builder(data):
+def niff2_color_list_header_builder():
     clh = Niff2ColorListHeader()
     clh.color_list_tag = TAG_COLOR_LIST
     clh.color_list_header_size = 7*4
@@ -426,7 +426,7 @@ class Niff2VectorListHeader:
         return 7*4
 
 
-def niff2_vector_list_header_builder(data):
+def niff2_vector_list_header_builder():
     vlh = Niff2VectorListHeader()
     vlh.vector_list_tag = TAG_VECTOR_LIST
     vlh.vector_list_header_size = 7*4
@@ -465,7 +465,7 @@ class Niff2StListHeader:
         return 6*4
 
 
-def niff2_st_list_header_builder(data):
+def niff2_st_list_header_builder():
     stlh = Niff2StListHeader()
     stlh.st_list_tag = TAG_ST_LIST
     stlh.st_list_header_size = 6*4
@@ -502,7 +502,7 @@ class Niff2MatListHeader:
         return 6*4
 
 
-def niff2_mat_list_header_builder(data):
+def niff2_mat_list_header_builder():
     mlh = Niff2MatListHeader()
     mlh.mat_list_tag = TAG_MAT_LIST
     mlh.mat_list_header_size = 6*4
@@ -539,7 +539,7 @@ class Niff2TexListHeader:
         return 6*4
 
 
-def niff2_tex_list_header_builder(data):
+def niff2_tex_list_header_builder():
     tlh = Niff2TexListHeader()
     tlh.tex_list_tag = TAG_TEX_LIST
     tlh.tex_list_header_size = 6*4
@@ -576,7 +576,7 @@ class Niff2TexImgListHeader:
         return 6*4
 
 
-def niff2_tex_img_list_header_builder(data):
+def niff2_tex_img_list_header_builder():
     tilh = Niff2TexImgListHeader()
     tilh.tex_img_list_tag = TAG_TEX_IMG_LIST
     tilh.tex_img_list_header_size = 6*4
@@ -613,7 +613,7 @@ class Niff2AnimListHeader:
         return 6*4
 
 
-def niff2_anim_list_header_builder(data):
+def niff2_anim_list_header_builder():
     alh = Niff2AnimListHeader()
     alh.anim_list_tag = TAG_ANIM_LIST
     alh.anim_list_header_size = 6*4
@@ -650,7 +650,7 @@ class Niff2CollListHeader:
         return 6*4
 
 
-def niff2_coll_list_header_builder(data):
+def niff2_coll_list_header_builder():
     clh = Niff2CollListHeader()
     clh.coll_list_tag = TAG_COLL_LIST
     clh.coll_list_header_size = 6*4
@@ -687,7 +687,7 @@ class Niff2SwitchListHeader:
         return 6*4
 
 
-def niff2_switch_list_header_builder(data):
+def niff2_switch_list_header_builder():
     slh = Niff2SwitchListHeader()
     slh.switch_list_tag = TAG_SWITCH_LIST
     slh.switch_list_header_size = 6*4
@@ -724,7 +724,7 @@ class Niff2CiImgListHeader:
         return 6*4
 
 
-def niff2_ci_img_list_header_builder(data):
+def niff2_ci_img_list_header_builder():
     cilh = Niff2CiImgListHeader()
     cilh.ci_img_list_tag = TAG_CI_IMG_LIST
     cilh.ci_img_list_header_size = 6*4
@@ -761,7 +761,7 @@ class Niff2ColorPaletteListHeader:
         return 6*4
 
 
-def niff2_color_palette_list_header_builder(data):
+def niff2_color_palette_list_header_builder():
     cplh = Niff2ColorPaletteListHeader()
     cplh.color_palette_list_tag = TAG_COLOR_PALETTE_LIST
     cplh.color_palette_list_header_size = 6*4
@@ -798,7 +798,7 @@ class Niff2EnvelopeListHeader:
         return 6*4
 
 
-def niff2_envelope_list_header_builder(data):
+def niff2_envelope_list_header_builder():
     elh = Niff2EnvelopeListHeader()
     elh.envelope_list_tag = TAG_ENVELOPE_LIST
     elh.envelope_list_header_size = 6*4
@@ -835,7 +835,7 @@ class Niff2ClusterListHeader:
         return 6*4
 
 
-def niff2_cluster_list_header_builder(data):
+def niff2_cluster_list_header_builder():
     clh = Niff2ClusterListHeader()
     clh.cluster_list_tag = TAG_CLUSTER_LIST
     clh.cluster_list_header_size = 6*4
@@ -872,7 +872,7 @@ class Niff2WeightListHeader:
         return 6*4
 
 
-def niff2_weight_list_header_builder(data):
+def niff2_weight_list_header_builder():
     wlh = Niff2WeightListHeader()
     wlh.weight_list_tag = TAG_WEIGHT_LIST
     wlh.weight_list_header_size = 6*4
@@ -909,7 +909,7 @@ class Niff2ChainRootListHeader:
         return 6*4
 
 
-def niff2_chain_root_list_header_builder(data):
+def niff2_chain_root_list_header_builder():
     crlh = Niff2ChainRootListHeader()
     crlh.chain_root_list_tag = TAG_CHAIN_ROOT_LIST
     crlh.chain_root_list_header_size = 6*4
@@ -946,7 +946,7 @@ class Niff2JointListHeader:
         return 6*4
 
 
-def niff2_joint_list_header_builder(data):
+def niff2_joint_list_header_builder():
     jlh = Niff2JointListHeader()
     jlh.joint_list_tag = TAG_JOINT_LIST
     jlh.joint_list_header_size = 6*4
@@ -983,7 +983,7 @@ class Niff2EffectorListHeader:
         return 6*4
 
 
-def niff2_effector_list_header_builder(data):
+def niff2_effector_list_header_builder():
     elh = Niff2EffectorListHeader()
     elh.effector_list_tag = TAG_EFFECTOR_LIST
     elh.effector_list_header_size = 6*4
@@ -1020,7 +1020,7 @@ class Niff2ExternalNameListHeader:
         return 6*4
 
 
-def niff2_external_name_list_header_builder(data):
+def niff2_external_name_list_header_builder():
     enlh = Niff2ExternalNameListHeader()
     enlh.external_name_list_tag = TAG_EXTERNAL_NAME_LIST
     enlh.external_name_list_header_size = 6*4
@@ -1101,33 +1101,33 @@ def write_niff2(data, filepath):
         objs.append(obj)
 
     scene_header = niff2_scene_header_builder(scene_name.index(), objs)
-    env_list_header = niff2_env_list_header_builder(data)
-    cam_list_header = niff2_cam_list_header_builder(data)
-    light_list_header = niff2_light_list_header_builder(data)
+    env_list_header = niff2_env_list_header_builder()
+    cam_list_header = niff2_cam_list_header_builder()
+    light_list_header = niff2_light_list_header_builder()
     obj_list_header = niff2_obj_list_header_builder(objs)
     shape_list_header = niff2_shape_list_header_builder(shapes)
     vtx_list_header = niff2_vtx_list_header_builder(vtx_groups)
     tri_list_header = niff2_tri_list_header_builder(tri_groups)
-    color_list_header = niff2_color_list_header_builder(data)
-    vector_list_header = niff2_vector_list_header_builder(data)
-    st_list_header = niff2_st_list_header_builder(data)
+    color_list_header = niff2_color_list_header_builder()
+    vector_list_header = niff2_vector_list_header_builder()
+    st_list_header = niff2_st_list_header_builder()
     part_list_header = niff2_part_list_header_builder(parts)
-    mat_list_header = niff2_mat_list_header_builder(data)
-    tex_list_header = niff2_tex_list_header_builder(data)
-    tex_img_list_header = niff2_tex_img_list_header_builder(data)
-    anim_list_header = niff2_anim_list_header_builder(data)
-    coll_list_header = niff2_coll_list_header_builder(data)
-    switch_list_header = niff2_switch_list_header_builder(data)
+    mat_list_header = niff2_mat_list_header_builder()
+    tex_list_header = niff2_tex_list_header_builder()
+    tex_img_list_header = niff2_tex_img_list_header_builder()
+    anim_list_header = niff2_anim_list_header_builder()
+    coll_list_header = niff2_coll_list_header_builder()
+    switch_list_header = niff2_switch_list_header_builder()
     name_list_header = niff2_name_list_header_builder(names)
-    ci_img_list_header = niff2_ci_img_list_header_builder(data)
-    color_palette_list_header = niff2_color_palette_list_header_builder(data)
-    envelope_list_header = niff2_envelope_list_header_builder(data)
-    cluster_list_header = niff2_cluster_list_header_builder(data)
-    weight_list_header = niff2_weight_list_header_builder(data)
-    chain_root_list_header = niff2_chain_root_list_header_builder(data)
-    joint_list_header = niff2_joint_list_header_builder(data)
-    effector_list_header = niff2_effector_list_header_builder(data)
-    external_name_list_header = niff2_external_name_list_header_builder(data)
+    ci_img_list_header = niff2_ci_img_list_header_builder()
+    color_palette_list_header = niff2_color_palette_list_header_builder()
+    envelope_list_header = niff2_envelope_list_header_builder()
+    cluster_list_header = niff2_cluster_list_header_builder()
+    weight_list_header = niff2_weight_list_header_builder()
+    chain_root_list_header = niff2_chain_root_list_header_builder()
+    joint_list_header = niff2_joint_list_header_builder()
+    effector_list_header = niff2_effector_list_header_builder()
+    external_name_list_header = niff2_external_name_list_header_builder()
 
     file_size = Niff2FileHeader.num_bytes() \
         + scene_header.num_bytes() \
@@ -1264,5 +1264,5 @@ class N64Niff2Export(Operator, ExportHelper):
         maxlen=255,  # Max internal buffer length, longer would be clamped.
     )
 
-    def execute(self, context):
+    def execute(self, _):
         return write_niff2(bpy.data, self.filepath)
