@@ -1057,8 +1057,11 @@ def write_niff2(data, filepath):
     for vtx_group_index, mesh in zip(range(len(data.meshes)), data.meshes):
         vtx_group_name = niff2_name_node_builder(len(names), mesh.name+".vtx")
         names.append(vtx_group_name)
+        vtx_floats = []
+        for vtx in mesh.vertices:
+            vtx_floats += list(vtx.co)
         vtx_group = niff2_vtx_group_node_builder(
-            vtx_group_index, vtx_group_name.index())
+            vtx_group_index, vtx_group_name.index(), vtx_floats)
         vtx_groups.append(vtx_group)
 
     # NIFF2 TriGroup <-> Blender Mesh (1 tri_group per part)
