@@ -1,1 +1,2 @@
 fake-bpy-module-2.82==20200514
+parameterized==0.7.4
