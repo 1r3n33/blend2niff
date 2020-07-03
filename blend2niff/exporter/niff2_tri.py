@@ -71,42 +71,28 @@ def niff2_tri_list_header_writer(tlh, tri_groups, buf):
 # TriGroup Node
 #
 class Niff2TriGroupNode:
-    tri_group_tag: int
-    this_tri_group_index: int
-    tri_group_header_size: int
-    tri_group_size: int
-    tri_group_name_index: int
-    tri_anim_type: int
-    tri_anim_frame_num: int
-    tri_num: int
-    vtx_group_index: int
-    tri_color_group_index: int
-    vtx_color_group_index: int
-    tri_nv_group_index: int
-    vtx_nv_group_index: int
-    st_group_index: int
+    def __init__(self, index, name_index, vtx_group_index):
+        self.tri_group_tag = TAG_TRI_GROUP
+        self.this_tri_group_index = index
+        self.tri_group_header_size = (8*4)
+        self.tri_group_size = (8*4) + (6*4)
+        self.tri_group_name_index = name_index
+        self.tri_anim_type = TRI_ANIM_NONE
+        self.tri_anim_frame_num = 0
+        self.tri_num = 0
+        self.vtx_group_index = vtx_group_index
+        self.tri_color_group_index = BAD_INDEX
+        self.vtx_color_group_index = BAD_INDEX
+        self.tri_nv_group_index = BAD_INDEX
+        self.vtx_nv_group_index = BAD_INDEX
+        self.st_group_index = BAD_INDEX
 
     def index(self):
         return self.this_tri_group_index
 
 
 def niff2_tri_group_node_builder(tri_group_index, tri_group_name_index, vtx_group_index):
-    tri_group = Niff2TriGroupNode()
-    tri_group.tri_group_tag = TAG_TRI_GROUP
-    tri_group.this_tri_group_index = tri_group_index
-    tri_group.tri_group_header_size = (8*4)
-    tri_group.tri_group_size = (8*4) + (6*4)
-    tri_group.tri_group_name_index = tri_group_name_index
-    tri_group.tri_anim_type = TRI_ANIM_NONE
-    tri_group.tri_anim_frame_num = 0
-    tri_group.tri_num = 0
-    tri_group.vtx_group_index = vtx_group_index
-    tri_group.tri_color_group_index = BAD_INDEX
-    tri_group.vtx_color_group_index = BAD_INDEX
-    tri_group.tri_nv_group_index = BAD_INDEX
-    tri_group.vtx_nv_group_index = BAD_INDEX
-    tri_group.st_group_index = BAD_INDEX
-    return tri_group
+    return Niff2TriGroupNode(tri_group_index, tri_group_name_index, vtx_group_index)
 
 
 def niff2_tri_group_node_writer(tri_group, buf):
