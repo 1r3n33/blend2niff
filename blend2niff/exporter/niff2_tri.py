@@ -3,6 +3,7 @@
 #
 TAG_TRI_LIST = 0x00080000
 TAG_TRI_GROUP = 0x00080100
+TAG_TRI = 0x00080101
 
 TRI_ANIM_NONE = 0x00000000
 TRI_ANIM_VTX_FULL = 0x00000001
@@ -71,28 +72,35 @@ def niff2_tri_list_header_writer(tlh, tri_groups, buf):
 # TriGroup Node
 #
 class Niff2TriGroupNode:
-    def __init__(self, index, name_index, vtx_group_index):
+    def __init__(self, index, name_index, vtx_group_index, vtx_indices):
+        tris = []
+        for i in range(0, len(vtx_indices), 3):
+            tris.append(niff2_tri_node_builder(len(tris), vtx_indices[i:i+3]))
+
+        tri_size = sum(map(lambda tri: tri.tri_size, tris))
+
         self.tri_group_tag = TAG_TRI_GROUP
         self.this_tri_group_index = index
         self.tri_group_header_size = (8*4)
-        self.tri_group_size = (8*4) + (6*4)
+        self.tri_group_size = (8*4) + (6*4) + tri_size
         self.tri_group_name_index = name_index
         self.tri_anim_type = TRI_ANIM_NONE
         self.tri_anim_frame_num = 0
-        self.tri_num = 0
+        self.tri_num = len(tris)
         self.vtx_group_index = vtx_group_index
         self.tri_color_group_index = BAD_INDEX
         self.vtx_color_group_index = BAD_INDEX
         self.tri_nv_group_index = BAD_INDEX
         self.vtx_nv_group_index = BAD_INDEX
         self.st_group_index = BAD_INDEX
+        self.tris = tris
 
     def index(self):
         return self.this_tri_group_index
 
 
-def niff2_tri_group_node_builder(tri_group_index, tri_group_name_index, vtx_group_index):
-    return Niff2TriGroupNode(tri_group_index, tri_group_name_index, vtx_group_index)
+def niff2_tri_group_node_builder(tri_group_index, tri_group_name_index, vtx_group_index, vtx_indices):
+    return Niff2TriGroupNode(tri_group_index, tri_group_name_index, vtx_group_index, vtx_indices)
 
 
 def niff2_tri_group_node_writer(tri_group, buf):
@@ -110,4 +118,61 @@ def niff2_tri_group_node_writer(tri_group, buf):
     buf += tri_group.tri_nv_group_index.to_bytes(4, BYTE_ORDER)
     buf += tri_group.vtx_nv_group_index.to_bytes(4, BYTE_ORDER)
     buf += tri_group.st_group_index.to_bytes(4, BYTE_ORDER)
+
+    for tri in tri_group.tris:
+        buf = niff2_tri_node_writer(tri, buf)
+
+    return buf
+
+
+#
+# TriNode
+#
+class Niff2TriNode:
+    def __init__(self, index, vtx_indices):
+        self.tri_tag = TAG_TRI
+        self.this_tri_index = index
+        self.tri_size = (19*4)
+        self.tri_nv_index = BAD_INDEX
+        self.tri_color_index = BAD_INDEX
+        self.vtx_index0 = vtx_indices[0]
+        self.st_index0 = BAD_INDEX
+        self.vtx_nv_index0 = BAD_INDEX
+        self.vtx_color_index0 = BAD_INDEX
+        self.vtx_index1 = vtx_indices[1]
+        self.st_index1 = BAD_INDEX
+        self.vtx_nv_index1 = BAD_INDEX
+        self.vtx_color_index1 = BAD_INDEX
+        self.vtx_index2 = vtx_indices[2]
+        self.st_index2 = BAD_INDEX
+        self.vtx_nv_index2 = BAD_INDEX
+        self.vtx_color_index2 = BAD_INDEX
+        self.nintendo_extension_block_size = 0
+        self.user_extension_block_size = 0
+
+
+def niff2_tri_node_builder(index, vtx_indices):
+    return Niff2TriNode(index, vtx_indices)
+
+
+def niff2_tri_node_writer(tri, buf):
+    buf += tri.tri_tag.to_bytes(4, BYTE_ORDER)
+    buf += tri.this_tri_index.to_bytes(4, BYTE_ORDER)
+    buf += tri.tri_size.to_bytes(4, BYTE_ORDER)
+    buf += tri.tri_nv_index.to_bytes(4, BYTE_ORDER)
+    buf += tri.tri_color_index.to_bytes(4, BYTE_ORDER)
+    buf += tri.vtx_index0.to_bytes(4, BYTE_ORDER)
+    buf += tri.st_index0.to_bytes(4, BYTE_ORDER)
+    buf += tri.vtx_nv_index0.to_bytes(4, BYTE_ORDER)
+    buf += tri.vtx_color_index0.to_bytes(4, BYTE_ORDER)
+    buf += tri.vtx_index1.to_bytes(4, BYTE_ORDER)
+    buf += tri.st_index1.to_bytes(4, BYTE_ORDER)
+    buf += tri.vtx_nv_index1.to_bytes(4, BYTE_ORDER)
+    buf += tri.vtx_color_index1.to_bytes(4, BYTE_ORDER)
+    buf += tri.vtx_index2.to_bytes(4, BYTE_ORDER)
+    buf += tri.st_index2.to_bytes(4, BYTE_ORDER)
+    buf += tri.vtx_nv_index2.to_bytes(4, BYTE_ORDER)
+    buf += tri.vtx_color_index2.to_bytes(4, BYTE_ORDER)
+    buf += tri.nintendo_extension_block_size.to_bytes(4, BYTE_ORDER)
+    buf += tri.user_extension_block_size.to_bytes(4, BYTE_ORDER)
     return buf

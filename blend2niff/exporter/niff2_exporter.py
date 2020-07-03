@@ -1052,7 +1052,7 @@ def write_niff2(data, filepath):
         len(names), bpy.path.display_name_from_filepath(filepath))
     names.append(scene_name)
 
-    # NIFF2 Vtxgroup <-> Blender Mesh (1 vtx_group per part)
+    # NIFF2 VtxGroup <-> Blender Mesh (1 vtx_group per part)
     vtx_groups = []
     for vtx_group_index, mesh in zip(range(len(data.meshes)), data.meshes):
         vtx_group_name = niff2_name_node_builder(len(names), mesh.name+".vtx")
@@ -1069,8 +1069,12 @@ def write_niff2(data, filepath):
     for tri_group_index, mesh, vtx_group in zip(range(len(data.meshes)), data.meshes, vtx_groups):
         tri_group_name = niff2_name_node_builder(len(names), mesh.name+".tri")
         names.append(tri_group_name)
+        vtx_indices = []
+        mesh.calc_loop_triangles()
+        for tri in mesh.loop_triangles:
+            vtx_indices += list(tri.vertices)
         tri_group = niff2_tri_group_node_builder(
-            tri_group_index, tri_group_name.index(), vtx_group.index())
+            tri_group_index, tri_group_name.index(), vtx_group.index(), vtx_indices)
         tri_groups.append(tri_group)
 
     # NIFF2 Part <-> Blender Mesh (1 part per shape)
