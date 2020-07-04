@@ -2,6 +2,8 @@ import bpy
 from bpy_extras.io_utils import ExportHelper
 from bpy.props import StringProperty
 from bpy.types import Operator
+from .niff2_mat import (niff2_mat_list_header_builder,
+                        niff2_mat_list_header_writer)
 from .niff2_name import (niff2_name_list_header_builder, niff2_name_list_header_writer,
                          niff2_name_node_builder, niff2_name_node_writer)
 from .niff2_obj import (niff2_obj_list_header_builder,
@@ -31,7 +33,6 @@ TAG_LIGHT_LIST = 0x000f0000
 TAG_COLOR_LIST = 0x00050000
 TAG_VECTOR_LIST = 0x00060000
 TAG_ST_LIST = 0x00070000
-TAG_MAT_LIST = 0x000a0000
 TAG_TEX_LIST = 0x000b0000
 TAG_TEX_IMG_LIST = 0x00120000
 TAG_ANIM_LIST = 0x000c0000
@@ -483,43 +484,6 @@ def niff2_st_list_header_writer(stlh, buf):
     buf += stlh.st_group_num.to_bytes(4, BYTE_ORDER)
     buf += stlh.nintendo_extension_block_size.to_bytes(4, BYTE_ORDER)
     buf += stlh.user_extension_block_size.to_bytes(4, BYTE_ORDER)
-    return buf
-
-
-#
-# Mat List
-#
-class Niff2MatListHeader:
-    mat_list_tag: int
-    mat_list_header_size: int
-    mat_list_size: int
-    mat_num: int
-    nintendo_extension_block_size: int
-    user_extension_block_size: int
-
-    @staticmethod
-    def num_bytes():
-        return 6*4
-
-
-def niff2_mat_list_header_builder():
-    mlh = Niff2MatListHeader()
-    mlh.mat_list_tag = TAG_MAT_LIST
-    mlh.mat_list_header_size = 6*4
-    mlh.mat_list_size = 6*4
-    mlh.mat_num = 0
-    mlh.nintendo_extension_block_size = 0
-    mlh.user_extension_block_size = 0
-    return mlh
-
-
-def niff2_mat_list_header_writer(mlh, buf):
-    buf += mlh.mat_list_tag.to_bytes(4, BYTE_ORDER)
-    buf += mlh.mat_list_header_size.to_bytes(4, BYTE_ORDER)
-    buf += mlh.mat_list_size.to_bytes(4, BYTE_ORDER)
-    buf += mlh.mat_num.to_bytes(4, BYTE_ORDER)
-    buf += mlh.nintendo_extension_block_size.to_bytes(4, BYTE_ORDER)
-    buf += mlh.user_extension_block_size.to_bytes(4, BYTE_ORDER)
     return buf
 
 
