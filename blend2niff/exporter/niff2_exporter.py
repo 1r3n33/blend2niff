@@ -1,9 +1,11 @@
+"""Exporter operator."""
+
 import bpy
 from bpy_extras.io_utils import ExportHelper
 from bpy.props import StringProperty
 from bpy.types import Operator
-from .niff2_mat import (niff2_mat_list_header_builder,
-                        niff2_mat_list_header_writer)
+from .niff2_mat import (niff2_mat_list_header_builder, niff2_mat_list_header_writer,
+                        niff2_mat_node_builder, niff2_mat_node_writer)
 from .niff2_name import (niff2_name_list_header_builder, niff2_name_list_header_writer,
                          niff2_name_node_builder, niff2_name_node_writer)
 from .niff2_obj import (niff2_obj_list_header_builder,
@@ -1016,6 +1018,14 @@ def write_niff2(data, filepath):
         len(names), bpy.path.display_name_from_filepath(filepath))
     names.append(scene_name)
 
+    # Niff2 Material: Create a single default material
+    materials = []
+    default_material_name = niff2_name_node_builder(
+        len(names), "default_material.mat")
+    names.append(default_material_name)
+    default_material = niff2_mat_node_builder(0, default_material_name.index())
+    materials.append(default_material)
+
     # NIFF2 VtxGroup <-> Blender Mesh (1 vtx_group per part)
     vtx_groups = []
     for vtx_group_index, mesh in zip(range(len(data.meshes)), data.meshes):
@@ -1047,7 +1057,7 @@ def write_niff2(data, filepath):
         part_name = niff2_name_node_builder(len(names), mesh.name+".part")
         names.append(part_name)
         part = niff2_part_node_builder(
-            part_index, part_name.index(), tri_group.index())
+            part_index, part_name.index(), tri_group.index(), default_material.index())
         parts.append(part)
 
     # NIFF2 Shape <-> Blender Mesh
@@ -1056,7 +1066,7 @@ def write_niff2(data, filepath):
         shape_name = niff2_name_node_builder(len(names), mesh.name+".shape")
         names.append(shape_name)
         shape = niff2_shape_node_builder(
-            shape_index, shape_name.index(), tri_group.index())
+            shape_index, shape_name.index(), tri_group.index(), default_material.index())
         shapes.append(shape)
 
     # NIFF2 Obj <-> Blender Obj
@@ -1065,7 +1075,7 @@ def write_niff2(data, filepath):
         obj_name = niff2_name_node_builder(len(names), mesh.name+".obj")
         names.append(obj_name)
         obj = niff2_obj_node_builder(
-            obj_index, obj_name.index(), shape.index())
+            obj_index, obj_name.index(), shape.index(), default_material.index())
         objs.append(obj)
 
     scene_header = niff2_scene_header_builder(scene_name.index(), objs)
@@ -1080,7 +1090,7 @@ def write_niff2(data, filepath):
     vector_list_header = niff2_vector_list_header_builder()
     st_list_header = niff2_st_list_header_builder()
     part_list_header = niff2_part_list_header_builder(parts)
-    mat_list_header = niff2_mat_list_header_builder()
+    mat_list_header = niff2_mat_list_header_builder(materials)
     tex_list_header = niff2_tex_list_header_builder()
     tex_img_list_header = niff2_tex_img_list_header_builder()
     anim_list_header = niff2_anim_list_header_builder()
@@ -1188,7 +1198,10 @@ def write_niff2(data, filepath):
     for part in parts:
         niff2_part_node_writer(part, buf)
 
-    niff2_mat_list_header_writer(mat_list_header, buf)
+    niff2_mat_list_header_writer(mat_list_header, materials, buf)
+    for mat in materials:
+        niff2_mat_node_writer(mat, buf)
+
     niff2_tex_list_header_writer(tex_list_header, buf)
     niff2_tex_img_list_header_writer(tex_img_list_header, buf)
     niff2_anim_list_header_writer(anim_list_header, buf)

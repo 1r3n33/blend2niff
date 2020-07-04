@@ -87,7 +87,7 @@ class Niff2ShapeNode:
         return self.this_shape_index
 
 
-def niff2_shape_node_builder(shape_index, shape_name_index, tri_group_index):
+def niff2_shape_node_builder(shape_index, shape_name_index, shape_tri_group_index, shape_mat_index):
     part_num = 1
 
     shape = Niff2ShapeNode()
@@ -96,8 +96,8 @@ def niff2_shape_node_builder(shape_index, shape_name_index, tri_group_index):
     shape.shape_size = (10*4) + (part_num*4) + (3*4)
     shape.shape_name_index = shape_name_index
     shape.shape_type = SHAPE_TYPE_ZB | SHAPE_TYPE_CULL_BACK
-    shape.shape_tri_link = tri_group_index
-    shape.shape_mat_link = BAD_INDEX
+    shape.shape_tri_link = shape_tri_group_index
+    shape.shape_mat_link = shape_mat_index
     shape.shape_part_num = part_num
     shape.nintendo_extension_block_size = (3*4)
     shape.user_extension_block_size = 0
