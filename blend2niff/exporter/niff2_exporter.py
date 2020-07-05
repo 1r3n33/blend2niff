@@ -19,6 +19,8 @@ from .niff2_shape import (niff2_shape_list_header_builder, niff2_shape_list_head
                           niff2_shape_node_builder, niff2_shape_node_writer)
 from .niff2_tri import (niff2_tri_list_header_builder, niff2_tri_list_header_writer,
                         niff2_tri_group_node_builder, niff2_tri_group_node_writer)
+from .niff2_vector import (niff2_vector_list_header_builder,
+                           niff2_vector_list_header_writer)
 from .niff2_vtx import (niff2_vtx_list_header_builder, niff2_vtx_list_header_writer,
                         niff2_vtx_group_node_builder, niff2_vtx_group_node_writer)
 
@@ -35,7 +37,6 @@ TAG_SCENE_HEADER = 0x00010000
 TAG_ENV_LIST = 0x00100000
 TAG_CAM_LIST = 0x000e0000
 TAG_LIGHT_LIST = 0x000f0000
-TAG_VECTOR_LIST = 0x00060000
 TAG_ST_LIST = 0x00070000
 TAG_TEX_LIST = 0x000b0000
 TAG_TEX_IMG_LIST = 0x00120000
@@ -371,46 +372,6 @@ def niff2_light_list_header_writer(llh, buf):
     buf += llh.light_num.to_bytes(4, BYTE_ORDER)
     buf += llh.nintendo_extension_block_size.to_bytes(4, BYTE_ORDER)
     buf += llh.user_extension_block_size.to_bytes(4, BYTE_ORDER)
-    return buf
-
-
-#
-# Vector List
-#
-class Niff2VectorListHeader:
-    vector_list_tag: int
-    vector_list_header_size: int
-    vector_list_size: int
-    tri_nv_goup_num: int
-    vtx_nv_goup_num: int
-    nintendo_extension_block_size: int
-    user_extension_block_size: int
-
-    @staticmethod
-    def num_bytes():
-        return 7*4
-
-
-def niff2_vector_list_header_builder():
-    vlh = Niff2VectorListHeader()
-    vlh.vector_list_tag = TAG_VECTOR_LIST
-    vlh.vector_list_header_size = 7*4
-    vlh.vector_list_size = 7*4
-    vlh.tri_nv_group_num = 0
-    vlh.vtx_nv_group_num = 0
-    vlh.nintendo_extension_block_size = 0
-    vlh.user_extension_block_size = 0
-    return vlh
-
-
-def niff2_vector_list_header_writer(vlh, buf):
-    buf += vlh.vector_list_tag.to_bytes(4, BYTE_ORDER)
-    buf += vlh.vector_list_header_size.to_bytes(4, BYTE_ORDER)
-    buf += vlh.vector_list_size.to_bytes(4, BYTE_ORDER)
-    buf += vlh.tri_nv_group_num.to_bytes(4, BYTE_ORDER)
-    buf += vlh.vtx_nv_group_num.to_bytes(4, BYTE_ORDER)
-    buf += vlh.nintendo_extension_block_size.to_bytes(4, BYTE_ORDER)
-    buf += vlh.user_extension_block_size.to_bytes(4, BYTE_ORDER)
     return buf
 
 
