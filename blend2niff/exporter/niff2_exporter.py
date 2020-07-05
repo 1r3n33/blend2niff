@@ -19,8 +19,9 @@ from .niff2_shape import (niff2_shape_list_header_builder, niff2_shape_list_head
                           niff2_shape_node_builder, niff2_shape_node_writer)
 from .niff2_tri import (niff2_tri_list_header_builder, niff2_tri_list_header_writer,
                         niff2_tri_group_node_builder, niff2_tri_group_node_writer)
-from .niff2_vector import (niff2_vector_list_header_builder,
-                           niff2_vector_list_header_writer)
+from .niff2_vector import (niff2_vector_list_header_builder, niff2_vector_list_header_writer,
+                           niff2_tri_nv_group_node_builder, niff2_tri_nv_group_node_writer,
+                           niff2_vtx_nv_group_node_builder, niff2_vtx_nv_group_node_writer)
 from .niff2_vtx import (niff2_vtx_list_header_builder, niff2_vtx_list_header_writer,
                         niff2_vtx_group_node_builder, niff2_vtx_group_node_writer)
 
@@ -972,6 +973,17 @@ def write_niff2(data, filepath):
             vtx_group_index, vtx_group_name.index(), vtx_floats)
         vtx_groups.append(vtx_group)
 
+    # Niff2 Vector: Create a single default normal vector
+    tri_nv_groups = []
+    vtx_nv_groups = []
+    default_nv = [0.0, 1.0, 0.0]  # up
+    default_tri_nv_group = niff2_tri_nv_group_node_builder(
+        0, default_nv)
+    default_vtx_nv_group = niff2_vtx_nv_group_node_builder(
+        0, default_nv)
+    tri_nv_groups.append(default_tri_nv_group)
+    vtx_nv_groups.append(default_vtx_nv_group)
+
     # NIFF2 TriGroup <-> Blender Mesh (1 tri_group per part)
     tri_groups = []
     for tri_group_index, mesh, vtx_group in zip(range(len(data.meshes)), data.meshes, vtx_groups):
@@ -1022,7 +1034,8 @@ def write_niff2(data, filepath):
     tri_list_header = niff2_tri_list_header_builder(tri_groups)
     color_list_header = niff2_color_list_header_builder(
         tri_color_groups, vtx_color_groups)
-    vector_list_header = niff2_vector_list_header_builder()
+    vector_list_header = niff2_vector_list_header_builder(
+        tri_nv_groups, vtx_nv_groups)
     st_list_header = niff2_st_list_header_builder()
     part_list_header = niff2_part_list_header_builder(parts)
     mat_list_header = niff2_mat_list_header_builder(materials)
@@ -1132,7 +1145,13 @@ def write_niff2(data, filepath):
     for vtx_color_group in vtx_color_groups:
         niff2_vtx_color_group_node_writer(vtx_color_group, buf)
 
-    niff2_vector_list_header_writer(vector_list_header, buf)
+    niff2_vector_list_header_writer(
+        vector_list_header, tri_nv_groups, vtx_nv_groups, buf)
+    for tri_nv_group in tri_nv_groups:
+        niff2_tri_nv_group_node_writer(tri_nv_group, buf)
+    for vtx_nv_group in vtx_nv_groups:
+        niff2_vtx_nv_group_node_writer(vtx_nv_group, buf)
+
     niff2_st_list_header_writer(st_list_header, buf)
 
     niff2_part_list_header_writer(part_list_header, parts, buf)
