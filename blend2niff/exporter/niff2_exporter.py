@@ -4,8 +4,9 @@ import bpy
 from bpy_extras.io_utils import ExportHelper
 from bpy.props import StringProperty
 from bpy.types import Operator
-from .niff2_color import (niff2_color_list_header_builder,
-                          niff2_color_list_header_writer)
+from .niff2_color import (niff2_color_list_header_builder, niff2_color_list_header_writer,
+                          niff2_tri_color_group_node_builder, niff2_tri_color_group_node_writer,
+                          niff2_vtx_color_group_node_builder, niff2_vtx_color_group_node_writer)
 from .niff2_mat import (niff2_mat_list_header_builder, niff2_mat_list_header_writer,
                         niff2_mat_node_builder, niff2_mat_node_writer)
 from .niff2_name import (niff2_name_list_header_builder, niff2_name_list_header_writer,
@@ -979,6 +980,17 @@ def write_niff2(data, filepath):
         len(names), bpy.path.display_name_from_filepath(filepath))
     names.append(scene_name)
 
+    # Niff2 Color: Create a single default color
+    tri_color_groups = []
+    vtx_color_groups = []
+    default_color = [0.8, 0.8, 0.8, 1.0]  # rgba
+    default_tri_color_group = niff2_tri_color_group_node_builder(
+        0, default_color)
+    default_vtx_color_group = niff2_vtx_color_group_node_builder(
+        0, default_color)
+    tri_color_groups.append(default_tri_color_group)
+    vtx_color_groups.append(default_vtx_color_group)
+
     # Niff2 Material: Create a single default material
     materials = []
     default_material_name = niff2_name_node_builder(
@@ -1047,7 +1059,8 @@ def write_niff2(data, filepath):
     shape_list_header = niff2_shape_list_header_builder(shapes)
     vtx_list_header = niff2_vtx_list_header_builder(vtx_groups)
     tri_list_header = niff2_tri_list_header_builder(tri_groups)
-    color_list_header = niff2_color_list_header_builder()
+    color_list_header = niff2_color_list_header_builder(
+        tri_color_groups, vtx_color_groups)
     vector_list_header = niff2_vector_list_header_builder()
     st_list_header = niff2_st_list_header_builder()
     part_list_header = niff2_part_list_header_builder(parts)
@@ -1151,7 +1164,13 @@ def write_niff2(data, filepath):
     for tri_group in tri_groups:
         niff2_tri_group_node_writer(tri_group, buf)
 
-    niff2_color_list_header_writer(color_list_header, buf)
+    niff2_color_list_header_writer(
+        color_list_header, tri_color_groups, vtx_color_groups, buf)
+    for tri_color_group in tri_color_groups:
+        niff2_tri_color_group_node_writer(tri_color_group, buf)
+    for vtx_color_group in vtx_color_groups:
+        niff2_vtx_color_group_node_writer(vtx_color_group, buf)
+
     niff2_vector_list_header_writer(vector_list_header, buf)
     niff2_st_list_header_writer(st_list_header, buf)
 
