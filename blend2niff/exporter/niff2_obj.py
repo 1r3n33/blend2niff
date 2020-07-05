@@ -1,3 +1,5 @@
+"""NIFF2 Object."""
+
 #
 # Consts
 #
@@ -10,6 +12,8 @@ OBJ_STATE_ACTIVE = 0x00000001
 OBJ_TYPE_NULL = 0x00000000
 OBJ_TYPE_3D = 0x00000001
 OBJ_TYPE_BILLBOARD = 0x00000002
+
+OBJ_GROUP_NONE = 0x00000000
 
 OBJ_RENDER_CYC_1CYC = 0x00000000
 OBJ_RENDER_CYC_2CYC = 0x00000001
@@ -119,7 +123,7 @@ def niff2_obj_node_builder(obj_index, obj_name_index, obj_shape_index, obj_mat_i
     obj.obj_name_index = obj_name_index
     obj.obj_state = OBJ_STATE_ACTIVE
     obj.obj_type = OBJ_TYPE_3D
-    obj.obj_group = BAD_INDEX
+    obj.obj_group = OBJ_GROUP_NONE
     obj.obj_pri = 0
     obj.obj_render_cycle_type = OBJ_RENDER_CYC_1CYC
     obj.obj_render_pri = OBJ_RENDER_FLAG_NIFF << 24 | OBJ_RENDER_NIFF_OPA_SURF
