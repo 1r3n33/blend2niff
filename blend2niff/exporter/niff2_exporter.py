@@ -4,6 +4,8 @@ import bpy
 from bpy_extras.io_utils import ExportHelper
 from bpy.props import StringProperty
 from bpy.types import Operator
+from .niff2_color import (niff2_color_list_header_builder,
+                          niff2_color_list_header_writer)
 from .niff2_mat import (niff2_mat_list_header_builder, niff2_mat_list_header_writer,
                         niff2_mat_node_builder, niff2_mat_node_writer)
 from .niff2_name import (niff2_name_list_header_builder, niff2_name_list_header_writer,
@@ -32,7 +34,6 @@ TAG_SCENE_HEADER = 0x00010000
 TAG_ENV_LIST = 0x00100000
 TAG_CAM_LIST = 0x000e0000
 TAG_LIGHT_LIST = 0x000f0000
-TAG_COLOR_LIST = 0x00050000
 TAG_VECTOR_LIST = 0x00060000
 TAG_ST_LIST = 0x00070000
 TAG_TEX_LIST = 0x000b0000
@@ -369,46 +370,6 @@ def niff2_light_list_header_writer(llh, buf):
     buf += llh.light_num.to_bytes(4, BYTE_ORDER)
     buf += llh.nintendo_extension_block_size.to_bytes(4, BYTE_ORDER)
     buf += llh.user_extension_block_size.to_bytes(4, BYTE_ORDER)
-    return buf
-
-
-#
-# Color List
-#
-class Niff2ColorListHeader:
-    color_list_tag: int
-    color_list_header_size: int
-    color_list_size: int
-    tri_color_goup_num: int
-    vtx_color_goup_num: int
-    nintendo_extension_block_size: int
-    user_extension_block_size: int
-
-    @staticmethod
-    def num_bytes():
-        return 7*4
-
-
-def niff2_color_list_header_builder():
-    clh = Niff2ColorListHeader()
-    clh.color_list_tag = TAG_COLOR_LIST
-    clh.color_list_header_size = 7*4
-    clh.color_list_size = 7*4
-    clh.tri_color_group_num = 0
-    clh.vtx_color_group_num = 0
-    clh.nintendo_extension_block_size = 0
-    clh.user_extension_block_size = 0
-    return clh
-
-
-def niff2_color_list_header_writer(clh, buf):
-    buf += clh.color_list_tag.to_bytes(4, BYTE_ORDER)
-    buf += clh.color_list_header_size.to_bytes(4, BYTE_ORDER)
-    buf += clh.color_list_size.to_bytes(4, BYTE_ORDER)
-    buf += clh.tri_color_group_num.to_bytes(4, BYTE_ORDER)
-    buf += clh.vtx_color_group_num.to_bytes(4, BYTE_ORDER)
-    buf += clh.nintendo_extension_block_size.to_bytes(4, BYTE_ORDER)
-    buf += clh.user_extension_block_size.to_bytes(4, BYTE_ORDER)
     return buf
 
 
