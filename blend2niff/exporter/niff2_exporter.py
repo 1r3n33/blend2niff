@@ -17,6 +17,8 @@ from .niff2_part import (niff2_part_list_header_builder, niff2_part_list_header_
                          niff2_part_node_builder, niff2_part_node_writer)
 from .niff2_shape import (niff2_shape_list_header_builder, niff2_shape_list_header_writer,
                           niff2_shape_node_builder, niff2_shape_node_writer)
+from .niff2_st import (niff2_st_list_header_builder,
+                       niff2_st_list_header_writer)
 from .niff2_tri import (niff2_tri_list_header_builder, niff2_tri_list_header_writer,
                         niff2_tri_group_node_builder, niff2_tri_group_node_writer)
 from .niff2_vector import (niff2_vector_list_header_builder, niff2_vector_list_header_writer,
@@ -38,7 +40,6 @@ TAG_SCENE_HEADER = 0x00010000
 TAG_ENV_LIST = 0x00100000
 TAG_CAM_LIST = 0x000e0000
 TAG_LIGHT_LIST = 0x000f0000
-TAG_ST_LIST = 0x00070000
 TAG_TEX_LIST = 0x000b0000
 TAG_TEX_IMG_LIST = 0x00120000
 TAG_ANIM_LIST = 0x000c0000
@@ -373,43 +374,6 @@ def niff2_light_list_header_writer(llh, buf):
     buf += llh.light_num.to_bytes(4, BYTE_ORDER)
     buf += llh.nintendo_extension_block_size.to_bytes(4, BYTE_ORDER)
     buf += llh.user_extension_block_size.to_bytes(4, BYTE_ORDER)
-    return buf
-
-
-#
-# St List
-#
-class Niff2StListHeader:
-    st_list_tag: int
-    st_list_header_size: int
-    st_list_size: int
-    st_goup_num: int
-    nintendo_extension_block_size: int
-    user_extension_block_size: int
-
-    @staticmethod
-    def num_bytes():
-        return 6*4
-
-
-def niff2_st_list_header_builder():
-    stlh = Niff2StListHeader()
-    stlh.st_list_tag = TAG_ST_LIST
-    stlh.st_list_header_size = 6*4
-    stlh.st_list_size = 6*4
-    stlh.st_group_num = 0
-    stlh.nintendo_extension_block_size = 0
-    stlh.user_extension_block_size = 0
-    return stlh
-
-
-def niff2_st_list_header_writer(stlh, buf):
-    buf += stlh.st_list_tag.to_bytes(4, BYTE_ORDER)
-    buf += stlh.st_list_header_size.to_bytes(4, BYTE_ORDER)
-    buf += stlh.st_list_size.to_bytes(4, BYTE_ORDER)
-    buf += stlh.st_group_num.to_bytes(4, BYTE_ORDER)
-    buf += stlh.nintendo_extension_block_size.to_bytes(4, BYTE_ORDER)
-    buf += stlh.user_extension_block_size.to_bytes(4, BYTE_ORDER)
     return buf
 
 
