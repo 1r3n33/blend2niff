@@ -88,11 +88,11 @@ class Niff2TriGroupNode:
         self.tri_anim_frame_num = 0
         self.tri_num = len(tris)
         self.vtx_group_index = vtx_group_index
-        self.tri_color_group_index = BAD_INDEX
-        self.vtx_color_group_index = BAD_INDEX
-        self.tri_nv_group_index = BAD_INDEX
-        self.vtx_nv_group_index = BAD_INDEX
-        self.st_group_index = BAD_INDEX
+        self.tri_color_group_index = 0  # Do not use BAD_INDEX
+        self.vtx_color_group_index = 0  # Do not use BAD_INDEX
+        self.tri_nv_group_index = 0  # Do not use BAD_INDEX
+        self.vtx_nv_group_index = 0  # Do not use BAD_INDEX
+        self.st_group_index = 0  # Do not use BAD_INDEX
         self.tris = tris
 
     def index(self):
@@ -133,20 +133,20 @@ class Niff2TriNode:
         self.tri_tag = TAG_TRI
         self.this_tri_index = index
         self.tri_size = (19*4)
-        self.tri_nv_index = BAD_INDEX
-        self.tri_color_index = BAD_INDEX
+        self.tri_nv_index = 0
+        self.tri_color_index = 0
         self.vtx_index0 = vtx_indices[0]
-        self.st_index0 = BAD_INDEX
-        self.vtx_nv_index0 = BAD_INDEX
-        self.vtx_color_index0 = BAD_INDEX
+        self.st_index0 = 0
+        self.vtx_nv_index0 = 0
+        self.vtx_color_index0 = 0
         self.vtx_index1 = vtx_indices[1]
-        self.st_index1 = BAD_INDEX
-        self.vtx_nv_index1 = BAD_INDEX
-        self.vtx_color_index1 = BAD_INDEX
+        self.st_index1 = 0
+        self.vtx_nv_index1 = 0
+        self.vtx_color_index1 = 0
         self.vtx_index2 = vtx_indices[2]
-        self.st_index2 = BAD_INDEX
-        self.vtx_nv_index2 = BAD_INDEX
-        self.vtx_color_index2 = BAD_INDEX
+        self.st_index2 = 0
+        self.vtx_nv_index2 = 0
+        self.vtx_color_index2 = 0
         self.nintendo_extension_block_size = 0
         self.user_extension_block_size = 0
 
