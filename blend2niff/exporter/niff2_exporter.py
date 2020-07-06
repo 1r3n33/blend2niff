@@ -17,8 +17,8 @@ from .niff2_part import (niff2_part_list_header_builder, niff2_part_list_header_
                          niff2_part_node_builder, niff2_part_node_writer)
 from .niff2_shape import (niff2_shape_list_header_builder, niff2_shape_list_header_writer,
                           niff2_shape_node_builder, niff2_shape_node_writer)
-from .niff2_st import (niff2_st_list_header_builder,
-                       niff2_st_list_header_writer)
+from .niff2_st import (niff2_st_list_header_builder, niff2_st_list_header_writer,
+                       niff2_st_group_node_builder, niff2_st_group_node_writer)
 from .niff2_tri import (niff2_tri_list_header_builder, niff2_tri_list_header_writer,
                         niff2_tri_group_node_builder, niff2_tri_group_node_writer)
 from .niff2_vector import (niff2_vector_list_header_builder, niff2_vector_list_header_writer,
@@ -906,17 +906,6 @@ def write_niff2(data, filepath):
         len(names), bpy.path.display_name_from_filepath(filepath))
     names.append(scene_name)
 
-    # Niff2 Color: Create a single default color
-    tri_color_groups = []
-    vtx_color_groups = []
-    default_color = [0.8, 0.8, 0.8, 1.0]  # rgba
-    default_tri_color_group = niff2_tri_color_group_node_builder(
-        0, default_color)
-    default_vtx_color_group = niff2_vtx_color_group_node_builder(
-        0, default_color)
-    tri_color_groups.append(default_tri_color_group)
-    vtx_color_groups.append(default_vtx_color_group)
-
     # Niff2 Material: Create a single default material
     materials = []
     default_material_name = niff2_name_node_builder(
@@ -937,7 +926,18 @@ def write_niff2(data, filepath):
             vtx_group_index, vtx_group_name.index(), vtx_floats)
         vtx_groups.append(vtx_group)
 
-    # Niff2 Vector: Create a single default normal vector
+    # Niff2 ColorGroup: Create a single default color
+    tri_color_groups = []
+    vtx_color_groups = []
+    default_color = [0.8, 0.8, 0.8, 1.0]  # rgba
+    default_tri_color_group = niff2_tri_color_group_node_builder(
+        0, default_color)
+    default_vtx_color_group = niff2_vtx_color_group_node_builder(
+        0, default_color)
+    tri_color_groups.append(default_tri_color_group)
+    vtx_color_groups.append(default_vtx_color_group)
+
+    # Niff2 VectorGroup: Create a single default normal vector
     tri_nv_groups = []
     vtx_nv_groups = []
     default_nv = [0.0, 1.0, 0.0]  # up
@@ -947,6 +947,12 @@ def write_niff2(data, filepath):
         0, default_nv)
     tri_nv_groups.append(default_tri_nv_group)
     vtx_nv_groups.append(default_vtx_nv_group)
+
+    # Niff2 stGroup: Create a single default texture coordinates
+    st_groups = []
+    default_st = [0.5, 0.5]  # center
+    default_st_group = niff2_st_group_node_builder(0, default_st)
+    st_groups.append(default_st_group)
 
     # NIFF2 TriGroup <-> Blender Mesh (1 tri_group per part)
     tri_groups = []
@@ -1000,7 +1006,7 @@ def write_niff2(data, filepath):
         tri_color_groups, vtx_color_groups)
     vector_list_header = niff2_vector_list_header_builder(
         tri_nv_groups, vtx_nv_groups)
-    st_list_header = niff2_st_list_header_builder()
+    st_list_header = niff2_st_list_header_builder(st_groups)
     part_list_header = niff2_part_list_header_builder(parts)
     mat_list_header = niff2_mat_list_header_builder(materials)
     tex_list_header = niff2_tex_list_header_builder()
@@ -1116,7 +1122,9 @@ def write_niff2(data, filepath):
     for vtx_nv_group in vtx_nv_groups:
         niff2_vtx_nv_group_node_writer(vtx_nv_group, buf)
 
-    niff2_st_list_header_writer(st_list_header, buf)
+    niff2_st_list_header_writer(st_list_header, st_groups, buf)
+    for st_group in st_groups:
+        niff2_st_group_node_writer(st_group, buf)
 
     niff2_part_list_header_writer(part_list_header, parts, buf)
     for part in parts:
