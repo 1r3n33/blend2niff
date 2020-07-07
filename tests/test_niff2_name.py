@@ -23,7 +23,3 @@ class TestNiff2Name(unittest.TestCase):
         self.assertEqual(name_node.name_header_size, 16)
         self.assertEqual(name_node.name_size, expected_size)
         self.assertEqual(name_node.node_name, name)
-
-
-if __name__ == '__main__':
-    unittest.main()

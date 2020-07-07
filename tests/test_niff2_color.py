@@ -41,7 +41,3 @@ class TestNiff2Color(unittest.TestCase):
         self.assertEqual(vtx_color_group_node.vtx_color_group_header_size, 20)
         self.assertEqual(vtx_color_group_node.vtx_color_group_size, 52)
         self.assertEqual(vtx_color_group_node.vtx_color_num, 2)
-
-
-if __name__ == '__main__':
-    unittest.main()

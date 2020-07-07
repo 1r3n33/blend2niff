@@ -48,7 +48,3 @@ class TestNiff2Obj(unittest.TestCase):
         self.assertEqual(obj_node.obj_chain_root_link_num, 0)
         self.assertEqual(obj_node.external_obj_lod_num, 0)
         self.assertEqual(obj_node.external_obj_num, 0)
-
-
-if __name__ == '__main__':
-    unittest.main()

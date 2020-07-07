@@ -72,7 +72,3 @@ class TestNiff2Mat(unittest.TestCase):
         self.assertEqual(mat_node.external_tex_num, 0)
         self.assertEqual(mat_node.prim_color_anim_num, 0)
         self.assertEqual(mat_node.prim_color_anim_num_for_fog, 0)
-
-
-if __name__ == '__main__':
-    unittest.main()

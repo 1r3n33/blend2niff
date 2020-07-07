@@ -41,7 +41,3 @@ class TestNiff2Vector(unittest.TestCase):
         self.assertEqual(vtx_nv_group_node.vtx_nv_group_header_size, 20)
         self.assertEqual(vtx_nv_group_node.vtx_nv_group_size, 44)
         self.assertEqual(vtx_nv_group_node.vtx_nv_num, 2)
-
-
-if __name__ == '__main__':
-    unittest.main()
