@@ -914,7 +914,7 @@ def write_niff2(data, filepath):
     default_material = niff2_mat_node_builder(0, default_material_name.index())
     materials.append(default_material)
 
-    # NIFF2 VtxGroup <-> Blender Mesh (1 vtx_group per part)
+    # NIFF2 VtxGroup <-> Blender Mesh (1 vtx_group per mesh)
     vtx_groups = []
     for vtx_group_index, mesh in zip(range(len(data.meshes)), data.meshes):
         vtx_group_name = niff2_name_node_builder(len(names), mesh.name+".vtx")
@@ -948,13 +948,13 @@ def write_niff2(data, filepath):
     tri_nv_groups.append(default_tri_nv_group)
     vtx_nv_groups.append(default_vtx_nv_group)
 
-    # Niff2 stGroup: Create a single default texture coordinates
+    # Niff2 StGroup: Create a single default texture coordinates
     st_groups = []
     default_st = [0.5, 0.5]  # center
     default_st_group = niff2_st_group_node_builder(0, default_st)
     st_groups.append(default_st_group)
 
-    # NIFF2 TriGroup <-> Blender Mesh (1 tri_group per part)
+    # NIFF2 TriGroup <-> Blender Mesh (1 tri_group per mesh)
     tri_groups = []
     for tri_group_index, mesh, vtx_group in zip(range(len(data.meshes)), data.meshes, vtx_groups):
         tri_group_name = niff2_name_node_builder(len(names), mesh.name+".tri")
@@ -967,14 +967,8 @@ def write_niff2(data, filepath):
             tri_group_index, tri_group_name.index(), vtx_group.index(), vtx_indices)
         tri_groups.append(tri_group)
 
-    # NIFF2 Part <-> Blender Mesh (1 part per shape)
+    # NIFF2 Part: Not supported
     parts = []
-    for part_index, mesh, tri_group in zip(range(len(data.meshes)), data.meshes, tri_groups):
-        part_name = niff2_name_node_builder(len(names), mesh.name+".part")
-        names.append(part_name)
-        part = niff2_part_node_builder(
-            part_index, part_name.index(), tri_group.index(), default_material.index())
-        parts.append(part)
 
     # NIFF2 Shape <-> Blender Mesh
     shapes = []
@@ -1097,8 +1091,8 @@ def write_niff2(data, filepath):
         niff2_obj_node_writer(obj, buf)
 
     niff2_shape_list_header_writer(shape_list_header, shapes, buf)
-    for shape, part in zip(shapes, parts):
-        niff2_shape_node_writer(shape, part.index(), buf)
+    for shape in shapes:
+        niff2_shape_node_writer(shape, buf)
 
     niff2_vtx_list_header_writer(vtx_list_header, vtx_groups, buf)
     for vtx_group in vtx_groups:

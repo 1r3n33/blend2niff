@@ -1,3 +1,5 @@
+"""NIFF2 Shape."""
+
 #
 # Consts
 #
@@ -43,7 +45,7 @@ def niff2_shape_list_header_builder(shapes):
 
     slh = Niff2ShapeListHeader()
     slh.shape_list_tag = TAG_SHAPE_LIST
-    slh.shape_list_header_size = (6*4) * (shape_num*4)
+    slh.shape_list_header_size = (6*4) + (shape_num*4)
     slh.shape_list_size = (6*4) + (shape_num*4) + shape_list_size
     slh.shape_num = shape_num
     slh.nintendo_extension_block_size = 0
@@ -88,17 +90,15 @@ class Niff2ShapeNode:
 
 
 def niff2_shape_node_builder(shape_index, shape_name_index, shape_tri_group_index, shape_mat_index):
-    part_num = 1
-
     shape = Niff2ShapeNode()
     shape.shape_tag = TAG_SHAPE
     shape.this_shape_index = shape_index
-    shape.shape_size = (10*4) + (part_num*4) + (3*4)
+    shape.shape_size = (10*4) + (3*4)
     shape.shape_name_index = shape_name_index
     shape.shape_type = SHAPE_TYPE_ZB | SHAPE_TYPE_CULL_BACK
     shape.shape_tri_link = shape_tri_group_index
     shape.shape_mat_link = shape_mat_index
-    shape.shape_part_num = part_num
+    shape.shape_part_num = 0
     shape.nintendo_extension_block_size = (3*4)
     shape.user_extension_block_size = 0
     shape.kind_of_node_for_geometry = TAG_TRI_GROUP
@@ -107,7 +107,7 @@ def niff2_shape_node_builder(shape_index, shape_name_index, shape_tri_group_inde
     return shape
 
 
-def niff2_shape_node_writer(shape, part_index, buf):
+def niff2_shape_node_writer(shape, buf):
     buf += shape.shape_tag.to_bytes(4, BYTE_ORDER)
     buf += shape.this_shape_index.to_bytes(4, BYTE_ORDER)
     buf += shape.shape_size.to_bytes(4, BYTE_ORDER)
@@ -118,7 +118,6 @@ def niff2_shape_node_writer(shape, part_index, buf):
     buf += shape.shape_part_num.to_bytes(4, BYTE_ORDER)
     buf += shape.nintendo_extension_block_size.to_bytes(4, BYTE_ORDER)
     buf += shape.user_extension_block_size.to_bytes(4, BYTE_ORDER)
-    buf += part_index.to_bytes(4, BYTE_ORDER)
     buf += shape.kind_of_node_for_geometry.to_bytes(4, BYTE_ORDER)
     buf += shape.external_mat_file_name_index.to_bytes(4, BYTE_ORDER)
     buf += shape.external_mat_name_index.to_bytes(4, BYTE_ORDER)
