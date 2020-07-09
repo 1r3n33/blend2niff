@@ -84,9 +84,9 @@ class Niff2MatNode:
         self.mat_name_index = name_index
         self.mat_type = MAT_TYPE_NIFF
         self.mat_shade_type = MAT_SHADE_LIGHT_OFF | MAT_SHADE_SMOOTH
-        self.mat_color_type0 = MAT_CC_NIFF_PRIM
+        self.mat_color_type0 = MAT_CC_NIFF_VTX
         self.mat_color_type1 = MAT_CC_NIFF_NONE
-        self.mat_alpha_type0 = MAT_CC_NIFF_PRIM_ALPHA
+        self.mat_alpha_type0 = MAT_CC_NIFF_VTX_ALPHA
         self.mat_alpha_type1 = MAT_CC_NIFF_NONE
         self.prim_red = 0.8
         self.prim_green = 0.1

@@ -14,7 +14,7 @@ from .niff2_name import (niff2_name_list_header_builder, niff2_name_list_header_
 from .niff2_obj import (niff2_obj_list_header_builder,
                         niff2_obj_list_header_writer, niff2_obj_node_builder, niff2_obj_node_writer)
 from .niff2_part import (niff2_part_list_header_builder, niff2_part_list_header_writer,
-                         niff2_part_node_builder, niff2_part_node_writer)
+                         niff2_part_node_writer)
 from .niff2_shape import (niff2_shape_list_header_builder, niff2_shape_list_header_writer,
                           niff2_shape_node_builder, niff2_shape_node_writer)
 from .niff2_st import (niff2_st_list_header_builder, niff2_st_list_header_writer,
@@ -936,6 +936,34 @@ def write_niff2(data, filepath):
         0, default_color)
     tri_color_groups.append(default_tri_color_group)
     vtx_color_groups.append(default_vtx_color_group)
+
+    # Niff2 ColorGroup: Create mesh vertex color group.
+    # (!) Make sure to have the same number of tri_color_groups & vtx_color_group.
+    #     This prevents nifftools/checknb2.exe from crashing.
+    # (!) Do not support smooth groups: 1 color per vertex!
+    #     Indices are all aligned both for vertex coords and vertex colors.
+    for vtx_color_group_index, mesh in zip(range(len(data.meshes)), data.meshes):
+        mesh.calc_loop_triangles()
+        vtx_colors = [float]*len(mesh.vertices)*4
+
+        mesh.calc_loop_triangles()
+        for tri in mesh.loop_triangles:
+            for i in range(3):
+                vtx_index = tri.vertices[i]
+                loop_index = tri.loops[i]
+                color = mesh.vertex_colors[0].data[loop_index].color
+                vtx_colors[(vtx_index*4)+0] = color[0]
+                vtx_colors[(vtx_index*4)+1] = color[1]
+                vtx_colors[(vtx_index*4)+2] = color[2]
+                vtx_colors[(vtx_index*4)+3] = color[3]
+
+        tri_color_group = niff2_tri_color_group_node_builder(
+            1+vtx_color_group_index, default_color)
+        tri_color_groups.append(tri_color_group)
+
+        vtx_color_group = niff2_vtx_color_group_node_builder(
+            1+vtx_color_group_index, vtx_colors)
+        vtx_color_groups.append(vtx_color_group)
 
     # Niff2 VectorGroup: Create a single default normal vector
     tri_nv_groups = []
