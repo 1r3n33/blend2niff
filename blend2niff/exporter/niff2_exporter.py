@@ -3,7 +3,7 @@
 import bpy
 from bpy_extras.io_utils import ExportHelper
 from bpy.props import StringProperty
-from bpy.types import Operator
+from bpy.types import (Operator, Mesh)
 from .niff2_color import (niff2_color_list_header_builder, niff2_color_list_header_writer,
                           niff2_tri_color_group_node_builder, niff2_tri_color_group_node_writer,
                           niff2_vtx_color_group_node_builder, niff2_vtx_color_group_node_writer)
@@ -901,6 +901,8 @@ def niff2_external_name_list_header_writer(enlh, buf):
 def write_niff2(data, filepath):
     print("running write_niff2...")
 
+    mesh_objs = list(filter(lambda obj: type(obj.data) == Mesh, data.objects))
+
     names = []
     scene_name = niff2_name_node_builder(
         len(names), bpy.path.display_name_from_filepath(filepath))
@@ -915,13 +917,16 @@ def write_niff2(data, filepath):
     materials.append(default_material)
 
     # NIFF2 VtxGroup <-> Blender Mesh (1 vtx_group per mesh)
+    # (!) Positioning of the object is done by transforming vertex coords.
+    #     TODO: Use AnimGroup of type ANIM_TYPE_STATIC to set location of meshes.
     vtx_groups = []
-    for vtx_group_index, mesh in zip(range(len(data.meshes)), data.meshes):
+    for vtx_group_index, obj in zip(range(len(mesh_objs)), mesh_objs):
+        mesh = obj.data
         vtx_group_name = niff2_name_node_builder(len(names), mesh.name+".vtx")
         names.append(vtx_group_name)
         vtx_floats = []
         for vtx in mesh.vertices:
-            vtx_floats += list(vtx.co)
+            vtx_floats += list(obj.matrix_world @ vtx.co)
         vtx_group = niff2_vtx_group_node_builder(
             vtx_group_index, vtx_group_name.index(), vtx_floats)
         vtx_groups.append(vtx_group)
