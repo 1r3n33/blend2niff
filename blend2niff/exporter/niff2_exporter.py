@@ -4,6 +4,8 @@ import bpy
 from bpy_extras.io_utils import ExportHelper
 from bpy.props import StringProperty
 from bpy.types import (Mesh, Operator)
+from .niff2_anim import (niff2_anim_list_header_builder,
+                         niff2_anim_list_header_writer)
 from .niff2_camera import (niff2_cam_list_header_builder,
                            niff2_cam_list_header_writer)
 from .niff2_color import (niff2_color_list_header_builder, niff2_color_list_header_writer,
@@ -43,7 +45,6 @@ TAG_ENV_LIST = 0x00100000
 TAG_LIGHT_LIST = 0x000f0000
 TAG_TEX_LIST = 0x000b0000
 TAG_TEX_IMG_LIST = 0x00120000
-TAG_ANIM_LIST = 0x000c0000
 TAG_COLL_LIST = 0x000d0000
 TAG_SWITCH_LIST = 0x00130000
 TAG_CI_IMG_LIST = 0x00200000
@@ -412,43 +413,6 @@ def niff2_tex_img_list_header_writer(tilh, buf):
     buf += tilh.tex_img_num.to_bytes(4, BYTE_ORDER)
     buf += tilh.nintendo_extension_block_size.to_bytes(4, BYTE_ORDER)
     buf += tilh.user_extension_block_size.to_bytes(4, BYTE_ORDER)
-    return buf
-
-
-#
-# Anim List
-#
-class Niff2AnimListHeader:
-    anim_list_tag: int
-    anim_list_header_size: int
-    anim_list_size: int
-    anim_group_num: int
-    nintendo_extension_block_size: int
-    user_extension_block_size: int
-
-    @staticmethod
-    def num_bytes():
-        return 6*4
-
-
-def niff2_anim_list_header_builder():
-    alh = Niff2AnimListHeader()
-    alh.anim_list_tag = TAG_ANIM_LIST
-    alh.anim_list_header_size = 6*4
-    alh.anim_list_size = 6*4
-    alh.anim_group_num = 0
-    alh.nintendo_extension_block_size = 0
-    alh.user_extension_block_size = 0
-    return alh
-
-
-def niff2_anim_list_header_writer(alh, buf):
-    buf += alh.anim_list_tag.to_bytes(4, BYTE_ORDER)
-    buf += alh.anim_list_header_size.to_bytes(4, BYTE_ORDER)
-    buf += alh.anim_list_size.to_bytes(4, BYTE_ORDER)
-    buf += alh.anim_group_num.to_bytes(4, BYTE_ORDER)
-    buf += alh.nintendo_extension_block_size.to_bytes(4, BYTE_ORDER)
-    buf += alh.user_extension_block_size.to_bytes(4, BYTE_ORDER)
     return buf
 
 
