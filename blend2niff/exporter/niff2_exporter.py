@@ -3,7 +3,9 @@
 import bpy
 from bpy_extras.io_utils import ExportHelper
 from bpy.props import StringProperty
-from bpy.types import (Operator, Mesh)
+from bpy.types import (Mesh, Operator)
+from .niff2_camera import (niff2_cam_list_header_builder,
+                           niff2_cam_list_header_writer)
 from .niff2_color import (niff2_color_list_header_builder, niff2_color_list_header_writer,
                           niff2_tri_color_group_node_builder, niff2_tri_color_group_node_writer,
                           niff2_vtx_color_group_node_builder, niff2_vtx_color_group_node_writer)
@@ -38,7 +40,6 @@ NIFF_MINOR_VERSION = 0x00
 TAG_HEADER = 0x00000000
 TAG_SCENE_HEADER = 0x00010000
 TAG_ENV_LIST = 0x00100000
-TAG_CAM_LIST = 0x000e0000
 TAG_LIGHT_LIST = 0x000f0000
 TAG_TEX_LIST = 0x000b0000
 TAG_TEX_IMG_LIST = 0x00120000
@@ -300,43 +301,6 @@ def niff2_env_list_header_writer(elh, buf):
     buf += elh.env_num.to_bytes(4, BYTE_ORDER)
     buf += elh.nintendo_extension_block_size.to_bytes(4, BYTE_ORDER)
     buf += elh.user_extension_block_size.to_bytes(4, BYTE_ORDER)
-    return buf
-
-
-#
-# Cam List
-#
-class Niff2CamListHeader:
-    cam_list_tag: int
-    cam_list_header_size: int
-    cam_list_size: int
-    cam_num: int
-    nintendo_extension_block_size: int
-    user_extension_block_size: int
-
-    @staticmethod
-    def num_bytes():
-        return 6*4
-
-
-def niff2_cam_list_header_builder():
-    clh = Niff2CamListHeader()
-    clh.cam_list_tag = TAG_CAM_LIST
-    clh.cam_list_header_size = 6*4
-    clh.cam_list_size = 6*4
-    clh.cam_num = 0
-    clh.nintendo_extension_block_size = 0
-    clh.user_extension_block_size = 0
-    return clh
-
-
-def niff2_cam_list_header_writer(clh, buf):
-    buf += clh.cam_list_tag.to_bytes(4, BYTE_ORDER)
-    buf += clh.cam_list_header_size.to_bytes(4, BYTE_ORDER)
-    buf += clh.cam_list_size.to_bytes(4, BYTE_ORDER)
-    buf += clh.cam_num.to_bytes(4, BYTE_ORDER)
-    buf += clh.nintendo_extension_block_size.to_bytes(4, BYTE_ORDER)
-    buf += clh.user_extension_block_size.to_bytes(4, BYTE_ORDER)
     return buf
 
 
@@ -901,7 +865,8 @@ def niff2_external_name_list_header_writer(enlh, buf):
 def write_niff2(data, filepath):
     print("running write_niff2...")
 
-    mesh_objs = list(filter(lambda obj: type(obj.data) == Mesh, data.objects))
+    mesh_objs = list(
+        filter(lambda obj: isinstance(obj.data, Mesh), data.objects))
 
     names = []
     scene_name = niff2_name_node_builder(
