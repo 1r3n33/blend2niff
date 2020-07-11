@@ -6,12 +6,14 @@ from bpy.props import StringProperty
 from bpy.types import (Mesh, Operator)
 from .niff2_anim import (niff2_anim_list_header_builder, niff2_anim_list_header_writer,
                          niff2_anim_group_builder, niff2_anim_group_writer,
-                         niff2_anim_node_builder, niff2_anim_node_writer)
+                         niff2_anim_node_builder)
 from .niff2_camera import (niff2_cam_list_header_builder,
                            niff2_cam_list_header_writer)
 from .niff2_color import (niff2_color_list_header_builder, niff2_color_list_header_writer,
                           niff2_tri_color_group_node_builder, niff2_tri_color_group_node_writer,
                           niff2_vtx_color_group_node_builder, niff2_vtx_color_group_node_writer)
+from .niff2_header import (Niff2FileHeader,
+                           niff2_file_header_builder, niff2_file_header_writer)
 from .niff2_mat import (niff2_mat_list_header_builder, niff2_mat_list_header_writer,
                         niff2_mat_node_builder, niff2_mat_node_writer)
 from .niff2_name import (niff2_name_list_header_builder, niff2_name_list_header_writer,
@@ -35,12 +37,6 @@ from .niff2_vtx import (niff2_vtx_list_header_builder, niff2_vtx_list_header_wri
 #
 # Consts
 #
-MAKER_CODE = 0xFF
-TOOL_CODE = 0x00
-NIFF_MAJOR_VERSION = 0x02
-NIFF_MINOR_VERSION = 0x00
-
-TAG_HEADER = 0x00000000
 TAG_SCENE_HEADER = 0x00010000
 TAG_ENV_LIST = 0x00100000
 TAG_LIGHT_LIST = 0x000f0000
@@ -71,127 +67,6 @@ CAM_TYPE_ORTHO = 0x00000001
 BAD_INDEX = 0xFFFFFFFF
 
 BYTE_ORDER = 'big'
-
-
-#
-# File Header
-#
-class Niff2FileHeader:
-    version: int
-    file_size: int
-    header_tag: int
-    file_header_num_byte: int
-    scene_list_num_byte: int
-    env_list_num_byte: int
-    cam_list_num_byte: int
-    light_list_num_byte: int
-    obj_list_num_byte: int
-    shape_list_num_byte: int
-    vtx_list_num_byte: int
-    color_list_num_byte: int
-    vector_list_num_byte: int
-    st_list_num_byte: int
-    tri_list_num_byte: int
-    part_list_num_byte: int
-    mat_list_num_byte: int
-    tex_list_num_byte: int
-    tex_img_list_num_byte: int
-    anim_list_num_byte: int
-    coll_list_num_byte: int
-    switch_list_num_byte: int
-    name_list_num_byte: int
-    nintendo_extension_block_size: int
-    user_extension_block_size: int
-    ci_img_list_num_byte: int
-    color_palette_list_num_byte: int
-    envelope_list_num_byte: int
-    cluster_list_num_byte: int
-    weight_list_num_byte: int
-    chain_root_list_num_byte: int
-    joint_list_num_byte: int
-    effector_list_num_byte: int
-    external_name_list_num_byte: int
-
-    @staticmethod
-    def num_bytes():
-        return (25*4) + (9*4)
-
-
-def niff2_file_header_builder(file_size):
-    fh = Niff2FileHeader()
-    fh.version = MAKER_CODE << 24 | TOOL_CODE << 16 | NIFF_MAJOR_VERSION << 8 | NIFF_MINOR_VERSION
-    fh.file_size = file_size
-    fh.header_tag = TAG_HEADER
-    fh.file_header_num_byte = (25*4) + (9*4)
-    fh.scene_list_num_byte = 0
-    fh.env_list_num_byte = 0
-    fh.cam_list_num_byte = 0
-    fh.light_list_num_byte = 0
-    fh.obj_list_num_byte = 0
-    fh.shape_list_num_byte = 0
-    fh.vtx_list_num_byte = 0
-    fh.color_list_num_byte = 0
-    fh.vector_list_num_byte = 0
-    fh.st_list_num_byte = 0
-    fh.tri_list_num_byte = 0
-    fh.part_list_num_byte = 0
-    fh.mat_list_num_byte = 0
-    fh.tex_list_num_byte = 0
-    fh.tex_img_list_num_byte = 0
-    fh.anim_list_num_byte = 0
-    fh.coll_list_num_byte = 0
-    fh.switch_list_num_byte = 0
-    fh.name_list_num_byte = 0
-    fh.nintendo_extension_block_size = 9*4
-    fh.user_extension_block_size = 0
-    fh.ci_img_list_num_byte = 0
-    fh.color_palette_list_num_byte = 0
-    fh.envelope_list_num_byte = 0
-    fh.cluster_list_num_byte = 0
-    fh.weight_list_num_byte = 0
-    fh.chain_root_list_num_byte = 0
-    fh.joint_list_num_byte = 0
-    fh.effector_list_num_byte = 0
-    fh.external_name_list_num_byte = 0
-    return fh
-
-
-def niff2_file_header_writer(fh, buf):
-    buf += fh.version.to_bytes(4, BYTE_ORDER)
-    buf += fh.file_size.to_bytes(4, BYTE_ORDER)
-    buf += fh.header_tag.to_bytes(4, BYTE_ORDER)
-    buf += fh.file_header_num_byte.to_bytes(4, BYTE_ORDER)
-    buf += fh.scene_list_num_byte.to_bytes(4, BYTE_ORDER)
-    buf += fh.env_list_num_byte.to_bytes(4, BYTE_ORDER)
-    buf += fh.cam_list_num_byte.to_bytes(4, BYTE_ORDER)
-    buf += fh.light_list_num_byte.to_bytes(4, BYTE_ORDER)
-    buf += fh.obj_list_num_byte.to_bytes(4, BYTE_ORDER)
-    buf += fh.shape_list_num_byte.to_bytes(4, BYTE_ORDER)
-    buf += fh.vtx_list_num_byte.to_bytes(4, BYTE_ORDER)
-    buf += fh.color_list_num_byte.to_bytes(4, BYTE_ORDER)
-    buf += fh.vector_list_num_byte.to_bytes(4, BYTE_ORDER)
-    buf += fh.st_list_num_byte.to_bytes(4, BYTE_ORDER)
-    buf += fh.tri_list_num_byte.to_bytes(4, BYTE_ORDER)
-    buf += fh.part_list_num_byte.to_bytes(4, BYTE_ORDER)
-    buf += fh.mat_list_num_byte.to_bytes(4, BYTE_ORDER)
-    buf += fh.tex_list_num_byte.to_bytes(4, BYTE_ORDER)
-    buf += fh.tex_img_list_num_byte.to_bytes(4, BYTE_ORDER)
-    buf += fh.anim_list_num_byte.to_bytes(4, BYTE_ORDER)
-    buf += fh.coll_list_num_byte.to_bytes(4, BYTE_ORDER)
-    buf += fh.switch_list_num_byte.to_bytes(4, BYTE_ORDER)
-    buf += fh.name_list_num_byte.to_bytes(4, BYTE_ORDER)
-    buf += fh.nintendo_extension_block_size.to_bytes(4, BYTE_ORDER)
-    buf += fh.user_extension_block_size.to_bytes(4, BYTE_ORDER)
-    buf += fh.ci_img_list_num_byte.to_bytes(4, BYTE_ORDER)
-    buf += fh.color_palette_list_num_byte.to_bytes(4, BYTE_ORDER)
-    buf += fh.envelope_list_num_byte.to_bytes(4, BYTE_ORDER)
-    buf += fh.cluster_list_num_byte.to_bytes(4, BYTE_ORDER)
-    buf += fh.weight_list_num_byte.to_bytes(4, BYTE_ORDER)
-    buf += fh.chain_root_list_num_byte.to_bytes(4, BYTE_ORDER)
-    buf += fh.joint_list_num_byte.to_bytes(4, BYTE_ORDER)
-    buf += fh.effector_list_num_byte.to_bytes(4, BYTE_ORDER)
-    buf += fh.external_name_list_num_byte.to_bytes(4, BYTE_ORDER)
-    return buf
 
 
 #
