@@ -4,8 +4,9 @@ import bpy
 from bpy_extras.io_utils import ExportHelper
 from bpy.props import StringProperty
 from bpy.types import (Mesh, Operator)
-from .niff2_anim import (niff2_anim_list_header_builder,
-                         niff2_anim_list_header_writer)
+from .niff2_anim import (niff2_anim_list_header_builder, niff2_anim_list_header_writer,
+                         niff2_anim_group_builder, niff2_anim_group_writer,
+                         niff2_anim_node_builder, niff2_anim_node_writer)
 from .niff2_camera import (niff2_cam_list_header_builder,
                            niff2_cam_list_header_writer)
 from .niff2_color import (niff2_color_list_header_builder, niff2_color_list_header_writer,
@@ -846,8 +847,6 @@ def write_niff2(data, filepath):
     materials.append(default_material)
 
     # NIFF2 VtxGroup <-> Blender Mesh (1 vtx_group per mesh)
-    # (!) Positioning of the object is done by transforming vertex coords.
-    #     TODO: Use AnimGroup of type ANIM_TYPE_STATIC to set location of meshes.
     vtx_groups = []
     for vtx_group_index, obj in zip(range(len(mesh_objs)), mesh_objs):
         mesh = obj.data
@@ -855,7 +854,7 @@ def write_niff2(data, filepath):
         names.append(vtx_group_name)
         vtx_floats = []
         for vtx in mesh.vertices:
-            vtx_floats += list(obj.matrix_world @ vtx.co)
+            vtx_floats += list(vtx.co)
         vtx_group = niff2_vtx_group_node_builder(
             vtx_group_index, vtx_group_name.index(), vtx_floats)
         vtx_groups.append(vtx_group)
@@ -941,13 +940,24 @@ def write_niff2(data, filepath):
             shape_index, shape_name.index(), tri_group.index(), default_material.index())
         shapes.append(shape)
 
-    # NIFF2 Obj <-> Blender Obj
+    # NIFF2 Anim: 1 anim per object
+    anim_groups = []
+    for anim_index, obj, in zip(range(len(mesh_objs)), mesh_objs):
+        anim_name = niff2_name_node_builder(len(names), obj.name+".anim")
+        names.append(anim_name)
+        anim_node = niff2_anim_node_builder(
+            obj.location, obj.rotation_euler, obj.scale)
+        anim_group = niff2_anim_group_builder(
+            anim_index, anim_name.index(), anim_node)
+        anim_groups.append(anim_group)
+
+    # NIFF2 Obj: Blender Object
     objs = []
-    for obj_index, mesh, shape in zip(range(len(data.meshes)), data.meshes, shapes):
-        obj_name = niff2_name_node_builder(len(names), mesh.name+".obj")
+    for obj_index, obj, shape, anim_group in zip(range(len(mesh_objs)), mesh_objs, shapes, anim_groups):
+        obj_name = niff2_name_node_builder(len(names), obj.name+".obj")
         names.append(obj_name)
         obj = niff2_obj_node_builder(
-            obj_index, obj_name.index(), shape.index(), default_material.index())
+            obj_index, obj_name.index(), shape.index(), default_material.index(), anim_group.index())
         objs.append(obj)
 
     scene_header = niff2_scene_header_builder(scene_name.index(), objs)
@@ -967,7 +977,7 @@ def write_niff2(data, filepath):
     mat_list_header = niff2_mat_list_header_builder(materials)
     tex_list_header = niff2_tex_list_header_builder()
     tex_img_list_header = niff2_tex_img_list_header_builder()
-    anim_list_header = niff2_anim_list_header_builder()
+    anim_list_header = niff2_anim_list_header_builder(anim_groups)
     coll_list_header = niff2_coll_list_header_builder()
     switch_list_header = niff2_switch_list_header_builder()
     name_list_header = niff2_name_list_header_builder(names)
@@ -1092,7 +1102,11 @@ def write_niff2(data, filepath):
 
     niff2_tex_list_header_writer(tex_list_header, buf)
     niff2_tex_img_list_header_writer(tex_img_list_header, buf)
-    niff2_anim_list_header_writer(anim_list_header, buf)
+
+    niff2_anim_list_header_writer(anim_list_header, anim_groups, buf)
+    for anim_group in anim_groups:
+        niff2_anim_group_writer(anim_group, buf)
+
     niff2_coll_list_header_writer(coll_list_header, buf)
     niff2_switch_list_header_writer(switch_list_header, buf)
 

@@ -2,12 +2,13 @@
 
 import unittest
 from blend2niff.exporter.niff2_obj import (
-    niff2_obj_list_header_builder, niff2_obj_node_builder)
+    niff2_obj_list_header_builder, niff2_obj_list_header_writer,
+    niff2_obj_node_builder, niff2_obj_node_writer)
 
 
 class TestNiff2Obj(unittest.TestCase):
     def test_niff2_obj_list_header_builder(self):
-        obj_node = niff2_obj_node_builder(12, 34, 56, 78)
+        obj_node = niff2_obj_node_builder(12, 34, 56, 78, 90)
         objs = [obj_node]
         obj_list_header = niff2_obj_list_header_builder(objs)
         self.assertEqual(obj_list_header.obj_list_tag, 0x00020000)
@@ -17,8 +18,23 @@ class TestNiff2Obj(unittest.TestCase):
         self.assertEqual(obj_list_header.nintendo_extension_block_size, 0)
         self.assertEqual(obj_list_header.user_extension_block_size, 0)
 
+    def test_niff2_obj_list_header_writer(self):
+        obj_node = niff2_obj_node_builder(12, 34, 56, 78, 90)
+        objs = [obj_node]
+        obj_list_header = niff2_obj_list_header_builder(objs)
+        buf = bytearray()
+        niff2_obj_list_header_writer(obj_list_header, objs, buf)
+        byte_list = [0x00, 0x02, 0x00, 0x00,
+                     0x00, 0x00, 0x00, 0x1C,
+                     0x00, 0x00, 0x00, 0x90,
+                     0x00, 0x00, 0x00, 0x01,
+                     0x00, 0x00, 0x00, 0x00,
+                     0x00, 0x00, 0x00, 0x00,
+                     0x00, 0x00, 0x00, 0x74]
+        self.assertEqual(list(buf), byte_list)
+
     def test_niff2_obj_node_builder(self):
-        obj_node = niff2_obj_node_builder(12, 34, 56, 78)
+        obj_node = niff2_obj_node_builder(12, 34, 56, 78, 90)
         self.assertEqual(obj_node.obj_tag, 0x00020100)
         self.assertEqual(obj_node.this_obj_index, 12)
         self.assertEqual(obj_node.obj_size, 116)
@@ -37,7 +53,7 @@ class TestNiff2Obj(unittest.TestCase):
         self.assertEqual(obj_node.obj_parent_link, 0xFFFFFFFF)
         self.assertEqual(obj_node.obj_shape_link, 56)
         self.assertEqual(obj_node.obj_mat_link, 78)
-        self.assertEqual(obj_node.obj_anim_link, 0xFFFFFFFF)
+        self.assertEqual(obj_node.obj_anim_link, 90)
         self.assertEqual(obj_node.obj_coll_link, 0xFFFFFFFF)
         self.assertEqual(obj_node.nintendo_extension_block_size, 28)
         self.assertEqual(obj_node.user_extension_block_size, 0)
@@ -48,3 +64,38 @@ class TestNiff2Obj(unittest.TestCase):
         self.assertEqual(obj_node.obj_chain_root_link_num, 0)
         self.assertEqual(obj_node.external_obj_lod_num, 0)
         self.assertEqual(obj_node.external_obj_num, 0)
+
+    def test_niff2_obj_node_writer(self):
+        obj_node = niff2_obj_node_builder(12, 34, 56, 78, 90)
+        buf = bytearray()
+        niff2_obj_node_writer(obj_node, buf)
+        byte_list = [0x00, 0x02, 0x01, 0x00,
+                     0x00, 0x00, 0x00, 0x0C,
+                     0x00, 0x00, 0x00, 0x74,
+                     0x00, 0x00, 0x00, 0x22,
+                     0x00, 0x00, 0x00, 0x01,
+                     0x00, 0x00, 0x00, 0x01,
+                     0x00, 0x00, 0x00, 0x00,
+                     0x00, 0x00, 0x00, 0x00,
+                     0x00, 0x00, 0x00, 0x00,
+                     0x00, 0xD0, 0x00, 0x00,
+                     0x00, 0x00, 0x00, 0x00,
+                     0x00, 0x00, 0x00, 0x00,
+                     0x00, 0x00, 0x00, 0x00,
+                     0x00, 0x00, 0x00, 0x00,
+                     0x00, 0x00, 0x00, 0x00,
+                     0xFF, 0xFF, 0xFF, 0xFF,
+                     0x00, 0x00, 0x00, 0x38,
+                     0x00, 0x00, 0x00, 0x4E,
+                     0x00, 0x00, 0x00, 0x5A,
+                     0xFF, 0xFF, 0xFF, 0xFF,
+                     0x00, 0x00, 0x00, 0x1C,
+                     0x00, 0x00, 0x00, 0x00,
+                     0x00, 0x00, 0x00, 0x01,
+                     0x00, 0xD0, 0x00, 0x00,
+                     0x00, 0x00, 0x00, 0x00,
+                     0x00, 0x00, 0x00, 0x00,
+                     0x00, 0x00, 0x00, 0x00,
+                     0x00, 0x00, 0x00, 0x00,
+                     0x00, 0x00, 0x00, 0x00]
+        self.assertEqual(list(buf), byte_list)
