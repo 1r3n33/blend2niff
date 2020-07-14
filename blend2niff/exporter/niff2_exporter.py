@@ -3,12 +3,12 @@
 import bpy
 from bpy_extras.io_utils import ExportHelper
 from bpy.props import StringProperty
-from bpy.types import (Mesh, Operator)
+from bpy.types import (Camera, Mesh, Operator)
 from .niff2_anim import (niff2_anim_list_header_builder, niff2_anim_list_header_writer,
                          niff2_anim_group_builder, niff2_anim_group_writer,
                          niff2_anim_node_builder)
-from .niff2_camera import (niff2_cam_list_header_builder,
-                           niff2_cam_list_header_writer)
+from .niff2_camera import (niff2_cam_list_header_builder, niff2_cam_list_header_writer,
+                           niff2_cam_node_builder, niff2_cam_node_writer)
 from .niff2_color import (niff2_color_list_header_builder, niff2_color_list_header_writer,
                           niff2_tri_color_group_node_builder, niff2_tri_color_group_node_writer,
                           niff2_vtx_color_group_node_builder, niff2_vtx_color_group_node_writer)
@@ -22,6 +22,8 @@ from .niff2_obj import (niff2_obj_list_header_builder,
                         niff2_obj_list_header_writer, niff2_obj_node_builder, niff2_obj_node_writer)
 from .niff2_part import (niff2_part_list_header_builder, niff2_part_list_header_writer,
                          niff2_part_node_writer)
+from .niff2_scene import (niff2_scene_header_builder,
+                          niff2_scene_header_writer)
 from .niff2_shape import (niff2_shape_list_header_builder, niff2_shape_list_header_writer,
                           niff2_shape_node_builder, niff2_shape_node_writer)
 from .niff2_st import (niff2_st_list_header_builder, niff2_st_list_header_writer,
@@ -37,7 +39,6 @@ from .niff2_vtx import (niff2_vtx_list_header_builder, niff2_vtx_list_header_wri
 #
 # Consts
 #
-TAG_SCENE_HEADER = 0x00010000
 TAG_ENV_LIST = 0x00100000
 TAG_LIGHT_LIST = 0x000f0000
 TAG_TEX_LIST = 0x000b0000
@@ -54,94 +55,9 @@ TAG_JOINT_LIST = 0x00250000
 TAG_EFFECTOR_LIST = 0x00260000
 TAG_EXTERNAL_NAME_LIST = 0x00270000
 
-SCENE_CFG_VIDEO_NTSC = 0x00000000
-SCENE_CFG_VIDEO_PAL = 0x00000001
-SCENE_CFG_VIDEO_MPAL = 0x00000002
-SCENE_CFG_GAMMA = 0x00000004
-SCENE_CFG_DITHER = 0x00000008
-SCENE_CFG_DIVOT = 0x00000010
-
-CAM_TYPE_PERSP = 0x00000000
-CAM_TYPE_ORTHO = 0x00000001
-
 BAD_INDEX = 0xFFFFFFFF
 
 BYTE_ORDER = 'big'
-
-
-#
-# Scene Header
-#
-class Niff2SceneHeader:
-    scene_header_tag: int
-    scene_header_size: int
-    scene_size: int
-    scene_cfg: int
-    scene_name_index: int
-    scene_obj_link_num: int
-    scene_env_link_num: int
-    scene_cam_link_num: int
-    scene_light_link_num: int
-    nintendo_extension_block_size: int
-    user_extension_block_size: int
-    scene_chain_root_link_num: int
-    external_obj_num: int
-    external_env_num: int
-    external_cam_num: int
-    external_light_num: int
-
-    def num_bytes(self):
-        return (11*4) + (5*4) + (self.scene_obj_link_num*4)
-
-
-def niff2_scene_header_builder(scene_name_index, objs):
-    scene_obj_link_num = len(objs)
-
-    sh = Niff2SceneHeader()
-    sh.scene_header_tag = TAG_SCENE_HEADER
-    sh.scene_header_size = 11*4
-    sh.scene_cfg = SCENE_CFG_VIDEO_NTSC | SCENE_CFG_DIVOT | SCENE_CFG_DITHER
-    sh.scene_name_index = scene_name_index
-    sh.scene_obj_link_num = scene_obj_link_num
-    sh.scene_env_link_num = 0
-    sh.scene_cam_link_num = 0
-    sh.scene_light_link_num = 0
-    sh.nintendo_extension_block_size = 5*4
-    sh.user_extension_block_size = 0
-    sh.scene_chain_root_link_num = 0
-    sh.external_obj_num = 0
-    sh.external_env_num = 0
-    sh.external_cam_num = 0
-    sh.external_light_num = 0
-
-    sh.scene_size = sh.num_bytes()
-
-    return sh
-
-
-def niff2_scene_header_writer(sh, buf):
-    buf += sh.scene_header_tag.to_bytes(4, BYTE_ORDER)
-    buf += sh.scene_header_size.to_bytes(4, BYTE_ORDER)
-    buf += sh.scene_size.to_bytes(4, BYTE_ORDER)
-    buf += sh.scene_cfg.to_bytes(4, BYTE_ORDER)
-    buf += sh.scene_name_index.to_bytes(4, BYTE_ORDER)
-    buf += sh.scene_obj_link_num.to_bytes(4, BYTE_ORDER)
-    buf += sh.scene_env_link_num.to_bytes(4, BYTE_ORDER)
-    buf += sh.scene_cam_link_num.to_bytes(4, BYTE_ORDER)
-    buf += sh.scene_light_link_num.to_bytes(4, BYTE_ORDER)
-    buf += sh.nintendo_extension_block_size.to_bytes(4, BYTE_ORDER)
-    buf += sh.user_extension_block_size.to_bytes(4, BYTE_ORDER)
-
-    for i in range(sh.scene_obj_link_num):
-        buf += i.to_bytes(4, BYTE_ORDER)
-
-    buf += sh.scene_chain_root_link_num.to_bytes(4, BYTE_ORDER)
-    buf += sh.external_obj_num.to_bytes(4, BYTE_ORDER)
-    buf += sh.external_env_num.to_bytes(4, BYTE_ORDER)
-    buf += sh.external_cam_num.to_bytes(4, BYTE_ORDER)
-    buf += sh.external_light_num.to_bytes(4, BYTE_ORDER)
-
-    return buf
 
 
 #
@@ -835,9 +751,21 @@ def write_niff2(data, filepath):
             obj_index, obj_name.index(), shape.index(), default_material.index(), anim_group.index())
         objs.append(obj)
 
-    scene_header = niff2_scene_header_builder(scene_name.index(), objs)
+    # NIFF2 Cam.
+    cam_objs = list(
+        filter(lambda obj: isinstance(obj.data, Camera), data.objects))
+
+    cams = []
+    for cam_index, obj in zip(range(len(cam_objs)), cam_objs):
+        cam = obj.data
+        cam_name = niff2_name_node_builder(len(names), cam.name+".cam")
+        names.append(cam_name)
+        cam_node = niff2_cam_node_builder(cam_index, cam_name.index())
+        cams.append(cam_node)
+
+    scene_header = niff2_scene_header_builder(scene_name.index(), objs, cams)
     env_list_header = niff2_env_list_header_builder()
-    cam_list_header = niff2_cam_list_header_builder()
+    cam_list_header = niff2_cam_list_header_builder(cams)
     light_list_header = niff2_light_list_header_builder()
     obj_list_header = niff2_obj_list_header_builder(objs)
     shape_list_header = niff2_shape_list_header_builder(shapes)
@@ -930,7 +858,11 @@ def write_niff2(data, filepath):
     niff2_file_header_writer(fh, buf)
     niff2_scene_header_writer(scene_header, buf)
     niff2_env_list_header_writer(env_list_header, buf)
-    niff2_cam_list_header_writer(cam_list_header, buf)
+
+    niff2_cam_list_header_writer(cam_list_header, cams, buf)
+    for cam in cams:
+        niff2_cam_node_writer(cam, buf)
+
     niff2_light_list_header_writer(light_list_header, buf)
 
     niff2_obj_list_header_writer(obj_list_header, objs, buf)
