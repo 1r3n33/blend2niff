@@ -122,7 +122,7 @@ def niff2_obj_node_builder(obj_index, obj_name_index, obj_shape_index, obj_mat_i
     obj.obj_size = (22*4) + (7*4)
     obj.obj_name_index = obj_name_index
     obj.obj_state = OBJ_STATE_ACTIVE
-    obj.obj_type = OBJ_TYPE_3D
+    obj.obj_type = OBJ_TYPE_3D if obj_shape_index != BAD_INDEX else OBJ_TYPE_NULL
     obj.obj_group = OBJ_GROUP_NONE
     obj.obj_pri = 0
     obj.obj_render_cycle_type = OBJ_RENDER_CYC_1CYC

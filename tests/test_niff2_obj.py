@@ -1,6 +1,8 @@
 """NIFF2 Object Tests."""
 
 import unittest
+from parameterized import parameterized
+
 from blend2niff.exporter.niff2_obj import (
     niff2_obj_list_header_builder, niff2_obj_list_header_writer,
     niff2_obj_node_builder, niff2_obj_node_writer)
@@ -33,14 +35,18 @@ class TestNiff2Obj(unittest.TestCase):
                      0x00, 0x00, 0x00, 0x74]
         self.assertEqual(list(buf), byte_list)
 
-    def test_niff2_obj_node_builder(self):
-        obj_node = niff2_obj_node_builder(12, 34, 56, 78, 90)
+    @parameterized.expand([
+        ("3d", 56, 0x00000001),
+        ("null", 0xFFFFFFFF, 0x00000000),
+    ])
+    def test_niff2_obj_node_builder(self, _, shape_index, expected_type):
+        obj_node = niff2_obj_node_builder(12, 34, shape_index, 78, 90)
         self.assertEqual(obj_node.obj_tag, 0x00020100)
         self.assertEqual(obj_node.this_obj_index, 12)
         self.assertEqual(obj_node.obj_size, 116)
         self.assertEqual(obj_node.obj_name_index, 34)
         self.assertEqual(obj_node.obj_state, 1)
-        self.assertEqual(obj_node.obj_type, 1)
+        self.assertEqual(obj_node.obj_type, expected_type)
         self.assertEqual(obj_node.obj_group, 0)
         self.assertEqual(obj_node.obj_pri, 0)
         self.assertEqual(obj_node.obj_render_cycle_type, 0)
@@ -51,7 +57,7 @@ class TestNiff2Obj(unittest.TestCase):
         self.assertEqual(obj_node.obj_lod_num, 0)
         self.assertEqual(obj_node.obj_child_num, 0)
         self.assertEqual(obj_node.obj_parent_link, 0xFFFFFFFF)
-        self.assertEqual(obj_node.obj_shape_link, 56)
+        self.assertEqual(obj_node.obj_shape_link, shape_index)
         self.assertEqual(obj_node.obj_mat_link, 78)
         self.assertEqual(obj_node.obj_anim_link, 90)
         self.assertEqual(obj_node.obj_coll_link, 0xFFFFFFFF)
