@@ -57,7 +57,7 @@ def niff2_cam_list_header_writer(cam_list_header, cams, buf):
 # Cam Node
 #
 class Niff2CamNode:
-    def __init__(self, index, name_index):
+    def __init__(self, index, name_index, eye_obj_index, lookat_obj_index, up_obj_index):
         self.cam_tag = TAG_CAM
         self.this_cam_index = index
         self.cam_size = 25*4
@@ -72,9 +72,9 @@ class Niff2CamNode:
         self.cam_fovy = 40.0
         self.cam_aspect = 320.0/240.0
         self.cam_scale = 1.0
-        self.cam_lookat_obj = BAD_INDEX
-        self.cam_eye_obj = BAD_INDEX
-        self.cam_up_obj = BAD_INDEX
+        self.cam_lookat_obj = lookat_obj_index
+        self.cam_eye_obj = eye_obj_index
+        self.cam_up_obj = up_obj_index
         self.nintendo_extension_block_size = 6*4
         self.user_extension_block_size = 0
         self.external_lookat_obj_file_name_index = BAD_INDEX
@@ -85,8 +85,8 @@ class Niff2CamNode:
         self.external_up_obj_name_index = BAD_INDEX
 
 
-def niff2_cam_node_builder(index, name_index):
-    return Niff2CamNode(index, name_index)
+def niff2_cam_node_builder(index, name_index, eye_obj_index, lookat_obj_index, up_obj_index):
+    return Niff2CamNode(index, name_index, eye_obj_index, lookat_obj_index, up_obj_index)
 
 
 def niff2_cam_node_writer(cam_node, buf):

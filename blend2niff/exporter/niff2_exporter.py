@@ -758,9 +758,58 @@ def write_niff2(data, filepath):
     cams = []
     for cam_index, obj in zip(range(len(cam_objs)), cam_objs):
         cam = obj.data
+        matrix = obj.matrix_world.transposed()
+
+        eye_anim_name = niff2_name_node_builder(
+            len(names), cam.name+".eye.anim")
+        names.append(eye_anim_name)
+        eye_anim_node = niff2_anim_node_builder(
+            obj.location, [0.0, 0.0, 0.0], [0.0, 0.0, 0.0])
+        eye_anim_group = niff2_anim_group_builder(
+            len(anim_groups), eye_anim_name.index(), eye_anim_node)
+        anim_groups.append(eye_anim_group)
+
+        lookat_anim_name = niff2_name_node_builder(
+            len(names), cam.name+".lookat.anim")
+        names.append(lookat_anim_name)
+        lookat_anim_node = niff2_anim_node_builder(
+            obj.location-matrix[2].xyz, [0.0, 0.0, 0.0], [0.0, 0.0, 0.0])
+        lookat_anim_group = niff2_anim_group_builder(
+            len(anim_groups), lookat_anim_name.index(), lookat_anim_node)
+        anim_groups.append(lookat_anim_group)
+
+        up_anim_name = niff2_name_node_builder(
+            len(names), cam.name+".up.anim")
+        names.append(up_anim_name)
+        up_anim_node = niff2_anim_node_builder(
+            obj.location+matrix[1].xyz, [0.0, 0.0, 0.0], [0.0, 0.0, 0.0])
+        up_anim_group = niff2_anim_group_builder(
+            len(anim_groups), up_anim_name.index(), up_anim_node)
+        anim_groups.append(up_anim_group)
+
+        eye_obj_name = niff2_name_node_builder(len(names), cam.name+".eye.obj")
+        names.append(eye_obj_name)
+        eye_obj = niff2_obj_node_builder(
+            len(objs), eye_obj_name.index(), BAD_INDEX, BAD_INDEX, eye_anim_group.index())
+        objs.append(eye_obj)
+
+        lookat_obj_name = niff2_name_node_builder(
+            len(names), cam.name+".lookat.obj")
+        names.append(lookat_obj_name)
+        lookat_obj = niff2_obj_node_builder(
+            len(objs), lookat_obj_name.index(), BAD_INDEX, BAD_INDEX, lookat_anim_group.index())
+        objs.append(lookat_obj)
+
+        up_obj_name = niff2_name_node_builder(len(names), cam.name+".up.obj")
+        names.append(up_obj_name)
+        up_obj = niff2_obj_node_builder(
+            len(objs), up_obj_name.index(), BAD_INDEX, BAD_INDEX, up_anim_group.index())
+        objs.append(up_obj)
+
         cam_name = niff2_name_node_builder(len(names), cam.name+".cam")
         names.append(cam_name)
-        cam_node = niff2_cam_node_builder(cam_index, cam_name.index())
+        cam_node = niff2_cam_node_builder(
+            cam_index, cam_name.index(), eye_obj.index(), lookat_obj.index(), up_obj.index())
         cams.append(cam_node)
 
     scene_header = niff2_scene_header_builder(scene_name.index(), objs, cams)

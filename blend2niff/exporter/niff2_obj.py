@@ -114,6 +114,9 @@ class Niff2ObjNode:
     external_obj_lod_num: int
     external_obj_num: int
 
+    def index(self):
+        return self.this_obj_index
+
 
 def niff2_obj_node_builder(obj_index, obj_name_index, obj_shape_index, obj_mat_index, anim_group_index):
     obj = Niff2ObjNode()
