@@ -1,14 +1,37 @@
-# env setup
+# Environment setup
 language: python
 python:
   - "3.8"
-# command to install dependencies
+# Command to install dependencies
 install:
   - pip install -r requirements.txt
-# command to run tests and upload coverage
+# Commands to run tests and upload coverage
 script:
   - python -m unittest discover -v
   - coverage run --source=. -m unittest discover
   - coverage report
   - coverage xml
   - bash <(curl -Ls https://coverage.codacy.com/get.sh) report -r coverage.xml
+# Commands to deploy artifact
+before_deploy:
+  - zip -r blend2niff.zip blend2niff -x "**/__pycache__/*"
+  # Set up git user name and tag this commit
+  - git config --local user.name "Travis CI"
+  - git config --local user.email "travis@blend2niff.deploy"
+  - export TRAVIS_TAG=$(date --rfc-3339=date)
+  - git tag $TRAVIS_TAG
+deploy:
+    provider: releases
+    token:
+        secure: VphW88rCuSVO7DSL/pblDKMf70swq2sLzS3XXFaBGdlkxAov7fW8KmqoIzLmiFc23eVOJKDp6vucBFsFQBgCw+BhkCd6CddmaptgDLo/QoK8/5dRbPJaZMVzrgwBgUUu07EDAr7+TLEFmWsuf60shzOoyE7TE1f7zwnKJhWaxqYUAR4FunqfF5dE4ZHRzDoR2JnaQALS40tbFWEqlVQ6TNUrS1uESYYu+8OMz0ciWX+zjv2gkDJXu/5xE21hk8IM5OojXd6MRo/3ndmjZtXrjbg0A2K0BW7drxY1huacv2RVegVPQM3IN09x2AUNmtRAbUKnOgalbgrMAuCZZBFKke2fxXSWDdkjTu5GeYxc2jrm3f3iGNGkrhOCQxtzMINLx826502Y7FQAkV5claSrzRP3jQtk3PTKt9FpAyzpAljAwbh7Ny9qf0xqYWWXO6dywDmsrxi9eYW5tNHz+L1fl8Zg4NLCvvLOHOc3A8d+ETgQgsMxLKtq1K2/xEFqKnJbuPmk3T6BhSszHQnir5jLWBH3Qe0MqUOswF1YCKvC3LUtOLrZu/TsIZ7jzo4Uc4gQNJovjEULMjKRx+vgBtWQ2FDJKDCc9DYx+zGX0q25weqGkHCKGdAlNpvlcJirjTYTugiqe2osUwAX0tFkfVPd4f4LIeeE7i5RG9CE58vc8nw=
+    file: blend2niff.zip
+    skip_cleanup: true
+    on:
+        tags: false
+        repo: 1r3n33/blend2niff
+        branch: master
+
+branches:
+    except:
+        # Do not treat tag pushes as commits to avoid looping
+        - /^*-v[0-9]/
