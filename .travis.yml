@@ -18,7 +18,7 @@ before_deploy:
   # Set up git user name and tag this commit
   - git config --local user.name "Travis CI"
   - git config --local user.email "travis@blend2niff.deploy"
-  - export TRAVIS_TAG=$(date -u --iso-8601=minutes)
+  - export TRAVIS_TAG=$(date -u +%Y-%m-%d-%H%M)
   - git tag $TRAVIS_TAG
 deploy:
     provider: releases
@@ -32,6 +32,5 @@ deploy:
         branch: master
 
 branches:
-    except:
-        # Do not treat tag pushes as commits to avoid looping
-        - /^*-v[0-9]/
+    only:
+      - master
