@@ -25,7 +25,7 @@ deploy:
     token:
         secure: VphW88rCuSVO7DSL/pblDKMf70swq2sLzS3XXFaBGdlkxAov7fW8KmqoIzLmiFc23eVOJKDp6vucBFsFQBgCw+BhkCd6CddmaptgDLo/QoK8/5dRbPJaZMVzrgwBgUUu07EDAr7+TLEFmWsuf60shzOoyE7TE1f7zwnKJhWaxqYUAR4FunqfF5dE4ZHRzDoR2JnaQALS40tbFWEqlVQ6TNUrS1uESYYu+8OMz0ciWX+zjv2gkDJXu/5xE21hk8IM5OojXd6MRo/3ndmjZtXrjbg0A2K0BW7drxY1huacv2RVegVPQM3IN09x2AUNmtRAbUKnOgalbgrMAuCZZBFKke2fxXSWDdkjTu5GeYxc2jrm3f3iGNGkrhOCQxtzMINLx826502Y7FQAkV5claSrzRP3jQtk3PTKt9FpAyzpAljAwbh7Ny9qf0xqYWWXO6dywDmsrxi9eYW5tNHz+L1fl8Zg4NLCvvLOHOc3A8d+ETgQgsMxLKtq1K2/xEFqKnJbuPmk3T6BhSszHQnir5jLWBH3Qe0MqUOswF1YCKvC3LUtOLrZu/TsIZ7jzo4Uc4gQNJovjEULMjKRx+vgBtWQ2FDJKDCc9DYx+zGX0q25weqGkHCKGdAlNpvlcJirjTYTugiqe2osUwAX0tFkfVPd4f4LIeeE7i5RG9CE58vc8nw=
     file: blend2niff.zip
-    cleanup: false
+    skip_cleanup: true
     on:
         tags: false
         repo: 1r3n33/blend2niff
