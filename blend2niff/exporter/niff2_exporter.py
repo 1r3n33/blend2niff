@@ -1,9 +1,7 @@
-"""Exporter operator."""
+"""Create .nif file from Blender data."""
 
 import bpy
-from bpy_extras.io_utils import ExportHelper
-from bpy.props import StringProperty
-from bpy.types import (Camera, Mesh, Operator)
+from bpy.types import (Camera, Mesh)
 from .niff2_anim import (niff2_anim_list_header_builder, niff2_anim_list_header_writer,
                          niff2_anim_group_builder, niff2_anim_group_writer,
                          niff2_anim_node_builder)
@@ -424,23 +422,3 @@ def write_niff2(data, filepath):
     f.close()
 
     return {'FINISHED'}
-
-
-class N64Niff2Export(Operator, ExportHelper):
-    """Blender operator to export to N64 NIFF2 format"""
-
-    # important since its how bpy.ops.export.to_n64_niff2 is constructed
-    bl_idname = "export.to_n64_niff2"
-    bl_label = "Export to N64 NIFF2"
-
-    # ExportHelper mixin class uses this
-    filename_ext = ".nif"
-
-    filter_glob: StringProperty(
-        default="*.nif",
-        options={'HIDDEN'},
-        maxlen=255,  # Max internal buffer length, longer would be clamped.
-    )
-
-    def execute(self, _):
-        return write_niff2(bpy.data, self.filepath)

@@ -1,10 +1,13 @@
+"""Add-on entry point."""
+
 if "bpy" in locals():
     from importlib import reload
-    reload(exporter)
+    reload(blend2niff.operator)
     del reload
 
 import bpy
-from . import exporter
+from blend2niff.operator import N64Niff2Export
+
 
 bl_info = {
     "name": "N64 NIFF2 Exporter",
@@ -18,22 +21,20 @@ bl_info = {
 
 
 def menu_func_export(self, _):
-    self.layout.operator(exporter.N64Niff2Export.bl_idname,
+    self.layout.operator(N64Niff2Export.bl_idname,
                          text="N64 NIFF2 (.nif)")
 
 
 def register():
-    bpy.utils.register_class(exporter.N64Niff2Export)
+    bpy.utils.register_class(N64Niff2Export)
     bpy.types.TOPBAR_MT_file_export.append(menu_func_export)
 
 
 def unregister():
-    bpy.utils.unregister_class(exporter.N64Niff2Export)
+    bpy.utils.unregister_class(N64Niff2Export)
     bpy.types.TOPBAR_MT_file_export.remove(menu_func_export)
 
 
 if __name__ == "__main__":
     register()
-
-    # test call
     bpy.ops.export.to_n64_niff2('INVOKE_DEFAULT')
