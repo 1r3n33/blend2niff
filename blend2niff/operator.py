@@ -15,6 +15,8 @@ class N64Niff2Export(Operator, ExportHelper):
 
     bl_label = "Export to N64 NIFF2"
 
+    bl_description = "Export to N64 NIFF2"
+
     # ExportHelper mixin class uses this
     filename_ext = ".nif"
 
