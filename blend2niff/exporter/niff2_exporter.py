@@ -10,6 +10,8 @@ from .niff2_camera import (niff2_cam_list_header_builder, niff2_cam_list_header_
 from .niff2_color import (niff2_color_list_header_builder, niff2_color_list_header_writer,
                           niff2_tri_color_group_node_builder, niff2_tri_color_group_node_writer,
                           niff2_vtx_color_group_node_builder, niff2_vtx_color_group_node_writer)
+from .niff2_env import (niff2_env_list_header_builder,
+                        niff2_env_list_header_writer)
 from .niff2_header import (Niff2FileHeader,
                            niff2_file_header_builder, niff2_file_header_writer)
 from .niff2_mat import (niff2_mat_list_header_builder, niff2_mat_list_header_writer,
@@ -39,7 +41,6 @@ from .niff2_misc import (niff2_chain_root_list_header_builder, niff2_chain_root_
                          niff2_coll_list_header_builder, niff2_coll_list_header_writer,
                          niff2_color_palette_list_header_builder, niff2_color_palette_list_header_writer,
                          niff2_effector_list_header_builder, niff2_effector_list_header_writer,
-                         niff2_env_list_header_builder, niff2_env_list_header_writer,
                          niff2_envelope_list_header_builder, niff2_envelope_list_header_writer,
                          niff2_external_name_list_header_builder, niff2_external_name_list_header_writer,
                          niff2_joint_list_header_builder, niff2_joint_list_header_writer,
