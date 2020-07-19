@@ -1,7 +1,6 @@
 #
 # Consts
 #
-TAG_LIGHT_LIST = 0x000f0000
 TAG_TEX_LIST = 0x000b0000
 TAG_TEX_IMG_LIST = 0x00120000
 TAG_COLL_LIST = 0x000d0000
@@ -19,43 +18,6 @@ TAG_EXTERNAL_NAME_LIST = 0x00270000
 BAD_INDEX = 0xFFFFFFFF
 
 BYTE_ORDER = 'big'
-
-
-#
-# Light List
-#
-class Niff2LightListHeader:
-    light_list_tag: int
-    light_list_header_size: int
-    light_list_size: int
-    light_num: int
-    nintendo_extension_block_size: int
-    user_extension_block_size: int
-
-    @staticmethod
-    def num_bytes():
-        return 6*4
-
-
-def niff2_light_list_header_builder():
-    llh = Niff2LightListHeader()
-    llh.light_list_tag = TAG_LIGHT_LIST
-    llh.light_list_header_size = 6*4
-    llh.light_list_size = 6*4
-    llh.light_num = 0
-    llh.nintendo_extension_block_size = 0
-    llh.user_extension_block_size = 0
-    return llh
-
-
-def niff2_light_list_header_writer(llh, buf):
-    buf += llh.light_list_tag.to_bytes(4, BYTE_ORDER)
-    buf += llh.light_list_header_size.to_bytes(4, BYTE_ORDER)
-    buf += llh.light_list_size.to_bytes(4, BYTE_ORDER)
-    buf += llh.light_num.to_bytes(4, BYTE_ORDER)
-    buf += llh.nintendo_extension_block_size.to_bytes(4, BYTE_ORDER)
-    buf += llh.user_extension_block_size.to_bytes(4, BYTE_ORDER)
-    return buf
 
 
 #

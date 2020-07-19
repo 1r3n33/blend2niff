@@ -14,6 +14,8 @@ from .niff2_env import (niff2_env_list_header_builder, niff2_env_list_header_wri
                         niff2_env_node_builder, niff2_env_node_writer)
 from .niff2_header import (Niff2FileHeader,
                            niff2_file_header_builder, niff2_file_header_writer)
+from .niff2_light import (niff2_light_list_header_builder,
+                          niff2_light_list_header_writer)
 from .niff2_mat import (niff2_mat_list_header_builder, niff2_mat_list_header_writer,
                         niff2_mat_node_builder, niff2_mat_node_writer)
 from .niff2_name import (niff2_name_list_header_builder, niff2_name_list_header_writer,
@@ -44,7 +46,6 @@ from .niff2_misc import (niff2_chain_root_list_header_builder, niff2_chain_root_
                          niff2_envelope_list_header_builder, niff2_envelope_list_header_writer,
                          niff2_external_name_list_header_builder, niff2_external_name_list_header_writer,
                          niff2_joint_list_header_builder, niff2_joint_list_header_writer,
-                         niff2_light_list_header_builder, niff2_light_list_header_writer,
                          niff2_switch_list_header_builder, niff2_switch_list_header_writer,
                          niff2_tex_img_list_header_builder, niff2_tex_img_list_header_writer,
                          niff2_tex_list_header_builder, niff2_tex_list_header_writer,
