@@ -21,15 +21,15 @@ BYTE_ORDER = 'big'
 # Scene Header
 #
 class Niff2SceneHeader:
-    def __init__(self, scene_name_index, scene_obj_link_num, scene_cam_link_num):
+    def __init__(self, scene_name_index, scene_obj_link_num, scene_cam_link_num, scene_env_link_num):
         self.scene_header_tag = TAG_SCENE_HEADER
         self.scene_header_size = (11*4)
         self.scene_size = (11*4) + (5*4) + \
-            (scene_obj_link_num*4) + (scene_cam_link_num*4)
+            (scene_obj_link_num*4) + (scene_cam_link_num*4) + (scene_env_link_num*4)
         self.scene_cfg = SCENE_CFG_VIDEO_NTSC | SCENE_CFG_DIVOT | SCENE_CFG_DITHER
         self.scene_name_index = scene_name_index
         self.scene_obj_link_num = scene_obj_link_num
-        self.scene_env_link_num = 0
+        self.scene_env_link_num = scene_env_link_num
         self.scene_cam_link_num = scene_cam_link_num
         self.scene_light_link_num = 0
         self.nintendo_extension_block_size = (5*4)
@@ -44,10 +44,11 @@ class Niff2SceneHeader:
         return self.scene_size
 
 
-def niff2_scene_header_builder(scene_name_index, objs, cams):
+def niff2_scene_header_builder(scene_name_index, objs, cams, envs):
     scene_obj_link_num = len(objs)
     scene_cam_link_num = len(cams)
-    return Niff2SceneHeader(scene_name_index, scene_obj_link_num, scene_cam_link_num)
+    scene_env_link_num = len(envs)
+    return Niff2SceneHeader(scene_name_index, scene_obj_link_num, scene_cam_link_num, scene_env_link_num)
 
 
 def niff2_scene_header_writer(scene_header, buf):
@@ -64,6 +65,8 @@ def niff2_scene_header_writer(scene_header, buf):
     buf += scene_header.user_extension_block_size.to_bytes(4, BYTE_ORDER)
 
     for i in range(scene_header.scene_obj_link_num):
+        buf += i.to_bytes(4, BYTE_ORDER)
+    for i in range(scene_header.scene_env_link_num):
         buf += i.to_bytes(4, BYTE_ORDER)
     for i in range(scene_header.scene_cam_link_num):
         buf += i.to_bytes(4, BYTE_ORDER)

@@ -10,8 +10,8 @@ from .niff2_camera import (niff2_cam_list_header_builder, niff2_cam_list_header_
 from .niff2_color import (niff2_color_list_header_builder, niff2_color_list_header_writer,
                           niff2_tri_color_group_node_builder, niff2_tri_color_group_node_writer,
                           niff2_vtx_color_group_node_builder, niff2_vtx_color_group_node_writer)
-from .niff2_env import (niff2_env_list_header_builder,
-                        niff2_env_list_header_writer)
+from .niff2_env import (niff2_env_list_header_builder, niff2_env_list_header_writer,
+                        niff2_env_node_builder, niff2_env_node_writer)
 from .niff2_header import (Niff2FileHeader,
                            niff2_file_header_builder, niff2_file_header_writer)
 from .niff2_mat import (niff2_mat_list_header_builder, niff2_mat_list_header_writer,
@@ -59,12 +59,13 @@ BAD_INDEX = 0xFFFFFFFF
 def write_niff2(data, filepath):
     print("running write_niff2...")
 
+    filename = bpy.path.display_name_from_filepath(filepath)
+
     mesh_objs = list(
         filter(lambda obj: isinstance(obj.data, Mesh), data.objects))
 
     names = []
-    scene_name = niff2_name_node_builder(
-        len(names), bpy.path.display_name_from_filepath(filepath))
+    scene_name = niff2_name_node_builder(len(names), filename+".scene")
     names.append(scene_name)
 
     # Niff2 Material: Create a single default material
@@ -250,8 +251,17 @@ def write_niff2(data, filepath):
             cam_index, cam_name.index(), eye_obj.index(), lookat_obj.index(), up_obj.index())
         cams.append(cam_node)
 
-    scene_header = niff2_scene_header_builder(scene_name.index(), objs, cams)
-    env_list_header = niff2_env_list_header_builder()
+    # NIFF2 Env
+    envs = []
+    env_name = niff2_name_node_builder(len(names), filename+".env")
+    names.append(env_name)
+    env_node = niff2_env_node_builder(
+        0, env_name.index(), data.worlds[0].color)
+    envs.append(env_node)
+
+    scene_header = niff2_scene_header_builder(
+        scene_name.index(), objs, cams, envs)
+    env_list_header = niff2_env_list_header_builder(envs)
     cam_list_header = niff2_cam_list_header_builder(cams)
     light_list_header = niff2_light_list_header_builder()
     obj_list_header = niff2_obj_list_header_builder(objs)
@@ -343,8 +353,12 @@ def write_niff2(data, filepath):
 
     buf = bytearray()
     niff2_file_header_writer(fh, buf)
+
     niff2_scene_header_writer(scene_header, buf)
-    niff2_env_list_header_writer(env_list_header, buf)
+
+    niff2_env_list_header_writer(env_list_header, envs, buf)
+    for env in envs:
+        niff2_env_node_writer(env, buf)
 
     niff2_cam_list_header_writer(cam_list_header, cams, buf)
     for cam in cams:
