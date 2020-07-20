@@ -1,7 +1,7 @@
 """Create .nif file from Blender data."""
 
 import bpy
-from bpy.types import (Camera, Mesh)
+from bpy.types import (Camera, Light, Mesh)
 from .niff2_anim import (niff2_anim_list_header_builder, niff2_anim_list_header_writer,
                          niff2_anim_group_builder, niff2_anim_group_writer,
                          niff2_anim_node_builder)
@@ -14,8 +14,8 @@ from .niff2_env import (niff2_env_list_header_builder, niff2_env_list_header_wri
                         niff2_env_node_builder, niff2_env_node_writer)
 from .niff2_header import (Niff2FileHeader,
                            niff2_file_header_builder, niff2_file_header_writer)
-from .niff2_light import (niff2_light_list_header_builder,
-                          niff2_light_list_header_writer)
+from .niff2_light import (niff2_light_list_header_builder, niff2_light_list_header_writer,
+                          niff2_light_node_builder, niff2_light_node_writer)
 from .niff2_mat import (niff2_mat_list_header_builder, niff2_mat_list_header_writer,
                         niff2_mat_node_builder, niff2_mat_node_writer)
 from .niff2_name import (niff2_name_list_header_builder, niff2_name_list_header_writer,
@@ -260,11 +260,28 @@ def write_niff2(data, filepath):
         0, env_name.index(), data.worlds[0].color)
     envs.append(env_node)
 
+    # NIFF2 Light
+    light_objs = list(
+        filter(lambda obj: isinstance(obj.data, Light), data.objects))
+
+    lights = []
+    for obj in light_objs:
+        light = obj.data
+        matrix = obj.matrix_world.transposed()
+
+        light_name = niff2_name_node_builder(len(names), light.name+".light")
+        names.append(light_name)
+
+        light_node = niff2_light_node_builder(len(lights), light_name.index(),
+                                              [0.05, 0.05, 0.05], light.color, -matrix[2].xyz)
+        lights.append(light_node)
+
+    # NIFF2 Header
     scene_header = niff2_scene_header_builder(
-        scene_name.index(), objs, cams, envs)
+        scene_name.index(), objs, cams, envs, lights)
     env_list_header = niff2_env_list_header_builder(envs)
     cam_list_header = niff2_cam_list_header_builder(cams)
-    light_list_header = niff2_light_list_header_builder()
+    light_list_header = niff2_light_list_header_builder(lights)
     obj_list_header = niff2_obj_list_header_builder(objs)
     shape_list_header = niff2_shape_list_header_builder(shapes)
     vtx_list_header = niff2_vtx_list_header_builder(vtx_groups)
@@ -365,7 +382,9 @@ def write_niff2(data, filepath):
     for cam in cams:
         niff2_cam_node_writer(cam, buf)
 
-    niff2_light_list_header_writer(light_list_header, buf)
+    niff2_light_list_header_writer(light_list_header, lights, buf)
+    for light in lights:
+        niff2_light_node_writer(light, buf)
 
     niff2_obj_list_header_writer(obj_list_header, objs, buf)
     for obj in objs:
