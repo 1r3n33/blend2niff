@@ -8,8 +8,6 @@ ignore-patterns:
 
 pylint:
   disable:
-    - trailing-whitespace
-    - missing-final-newline
     - too-few-public-methods
     - too-many-public-methods
     - deprecated-lambda
@@ -28,17 +26,12 @@ pylint:
     min-public-methods: 1
     max-public-methods: 20
     max-line-length: 99
+    ignored-modules: bpy,parameterized
 
 pep8:
   options:
     max-line-length: 99
   disable:
-    - E304
-    - E265
-    - E266
-    - W291
-    - W292
-    - W391
     - N811
     - N812
     - N813
