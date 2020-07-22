@@ -66,7 +66,7 @@ def niff2_vector_list_header_writer(vlh, tri_nv_groups, vtx_nv_groups, buf):
 
 
 #
-# TriNvGroup Node
+# TriNv Group
 #
 class Niff2TriNvGroup:
     def __init__(self, index, nv_floats):
@@ -78,25 +78,25 @@ class Niff2TriNvGroup:
         self.nv_floats = nv_floats
 
 
-def niff2_tri_nv_group_node_builder(index, nv_floats):
+def niff2_tri_nv_group_builder(index, nv_floats):
     return Niff2TriNvGroup(index, nv_floats)
 
 
-def niff2_tri_nv_group_node_writer(tri_nv_group_node, buf):
-    buf += tri_nv_group_node.tri_nv_group_tag.to_bytes(4, BYTE_ORDER)
-    buf += tri_nv_group_node.this_tri_nv_group_index.to_bytes(4, BYTE_ORDER)
-    buf += tri_nv_group_node.tri_nv_group_header_size.to_bytes(4, BYTE_ORDER)
-    buf += tri_nv_group_node.tri_nv_group_size.to_bytes(4, BYTE_ORDER)
-    buf += tri_nv_group_node.tri_nv_num.to_bytes(4, BYTE_ORDER)
+def niff2_tri_nv_group_writer(tri_nv_group, buf):
+    buf += tri_nv_group.tri_nv_group_tag.to_bytes(4, BYTE_ORDER)
+    buf += tri_nv_group.this_tri_nv_group_index.to_bytes(4, BYTE_ORDER)
+    buf += tri_nv_group.tri_nv_group_header_size.to_bytes(4, BYTE_ORDER)
+    buf += tri_nv_group.tri_nv_group_size.to_bytes(4, BYTE_ORDER)
+    buf += tri_nv_group.tri_nv_num.to_bytes(4, BYTE_ORDER)
 
-    for value in tri_nv_group_node.nv_floats:
+    for value in tri_nv_group.nv_floats:
         buf += bytearray(struct.pack(">f", value))
 
     return buf
 
 
 #
-# VtxNvGroup Node
+# VtxNv Group
 #
 class Niff2VtxNvGroup:
     def __init__(self, index, nv_floats):
@@ -108,18 +108,18 @@ class Niff2VtxNvGroup:
         self.nv_floats = nv_floats
 
 
-def niff2_vtx_nv_group_node_builder(index, nv_floats):
+def niff2_vtx_nv_group_builder(index, nv_floats):
     return Niff2VtxNvGroup(index, nv_floats)
 
 
-def niff2_vtx_nv_group_node_writer(vtx_nv_group_node, buf):
-    buf += vtx_nv_group_node.vtx_nv_group_tag.to_bytes(4, BYTE_ORDER)
-    buf += vtx_nv_group_node.this_vtx_nv_group_index.to_bytes(4, BYTE_ORDER)
-    buf += vtx_nv_group_node.vtx_nv_group_header_size.to_bytes(4, BYTE_ORDER)
-    buf += vtx_nv_group_node.vtx_nv_group_size.to_bytes(4, BYTE_ORDER)
-    buf += vtx_nv_group_node.vtx_nv_num.to_bytes(4, BYTE_ORDER)
+def niff2_vtx_nv_group_writer(vtx_nv_group, buf):
+    buf += vtx_nv_group.vtx_nv_group_tag.to_bytes(4, BYTE_ORDER)
+    buf += vtx_nv_group.this_vtx_nv_group_index.to_bytes(4, BYTE_ORDER)
+    buf += vtx_nv_group.vtx_nv_group_header_size.to_bytes(4, BYTE_ORDER)
+    buf += vtx_nv_group.vtx_nv_group_size.to_bytes(4, BYTE_ORDER)
+    buf += vtx_nv_group.vtx_nv_num.to_bytes(4, BYTE_ORDER)
 
-    for value in vtx_nv_group_node.nv_floats:
+    for value in vtx_nv_group.nv_floats:
         buf += bytearray(struct.pack(">f", value))
 
     return buf

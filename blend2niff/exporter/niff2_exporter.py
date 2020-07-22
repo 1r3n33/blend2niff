@@ -33,8 +33,8 @@ from .niff2_st import (niff2_st_list_header_builder, niff2_st_list_header_writer
 from .niff2_tri import (niff2_tri_list_header_builder, niff2_tri_list_header_writer,
                         niff2_tri_group_node_builder, niff2_tri_group_node_writer)
 from .niff2_vector import (niff2_vector_list_header_builder, niff2_vector_list_header_writer,
-                           niff2_tri_nv_group_node_builder, niff2_tri_nv_group_node_writer,
-                           niff2_vtx_nv_group_node_builder, niff2_vtx_nv_group_node_writer)
+                           niff2_tri_nv_group_builder, niff2_tri_nv_group_writer,
+                           niff2_vtx_nv_group_builder, niff2_vtx_nv_group_writer)
 from .niff2_vtx import (niff2_vtx_list_header_builder, niff2_vtx_list_header_writer,
                         niff2_vtx_group_node_builder, niff2_vtx_group_node_writer)
 from .niff2_misc import (niff2_chain_root_list_header_builder, niff2_chain_root_list_header_writer,
@@ -102,15 +102,14 @@ def write_niff2(data, filepath):
     vtx_color_groups.append(default_vtx_color_group)
 
     # Niff2 ColorGroup: Create mesh vertex color group.
-    # (!) Make sure to have the same number of tri_color_groups & vtx_color_group.
+    # (!) Make sure to have the same number of tri_color_groups & vtx_color_groups.
     #     This prevents nifftools/checknb2.exe from crashing.
     # (!) Do not support smooth groups: 1 color per vertex!
-    #     Indices are all aligned both for vertex coords and vertex colors.
+    #     Indices are all aligned on both vertex coords and vertex colors.
     for vtx_color_group_index, mesh in zip(range(len(data.meshes)), data.meshes):
         mesh.calc_loop_triangles()
         vtx_colors = [float]*len(mesh.vertices)*4
 
-        mesh.calc_loop_triangles()
         for tri in mesh.loop_triangles:
             for i in range(3):
                 vtx_index = tri.vertices[i]
@@ -133,12 +132,37 @@ def write_niff2(data, filepath):
     tri_nv_groups = []
     vtx_nv_groups = []
     default_nv = [0.0, 1.0, 0.0]  # up
-    default_tri_nv_group = niff2_tri_nv_group_node_builder(
-        0, default_nv)
-    default_vtx_nv_group = niff2_vtx_nv_group_node_builder(
-        0, default_nv)
+    default_tri_nv_group = niff2_tri_nv_group_builder(0, default_nv)
+    default_vtx_nv_group = niff2_vtx_nv_group_builder(0, default_nv)
     tri_nv_groups.append(default_tri_nv_group)
     vtx_nv_groups.append(default_vtx_nv_group)
+
+    # Niff2 VectorGroup: Create mesh vertex normals group.
+    # (!) Make sure to have the same number of tri_nv_groups & vtx_nv_groups.
+    #     This prevents nifftools/checknb2.exe from crashing.
+    # (!) Do not support smooth groups: 1 normal per vertex!
+    #     Indices are all aligned on both vertex coords and vertex normals.
+    for mesh in data.meshes:
+        mesh.calc_loop_triangles()
+        mesh.calc_normals_split()
+        vtx_normals = [float]*len(mesh.vertices)*3
+
+        for tri in mesh.loop_triangles:
+            for i in range(3):
+                vtx_index = tri.vertices[i]
+                loop_index = tri.loops[i]
+                normal = mesh.loops[loop_index].normal
+                vtx_normals[(vtx_index*3)+0] = normal[0]
+                vtx_normals[(vtx_index*3)+1] = normal[1]
+                vtx_normals[(vtx_index*3)+2] = normal[2]
+
+        tri_nv_group = niff2_tri_nv_group_builder(
+            len(tri_nv_groups), default_nv)
+        tri_nv_groups.append(tri_nv_group)
+
+        vtx_nv_group = niff2_vtx_nv_group_builder(
+            len(vtx_nv_groups), vtx_normals)
+        vtx_nv_groups.append(vtx_nv_group)
 
     # Niff2 StGroup: Create a single default texture coordinates
     st_groups = []
@@ -412,9 +436,9 @@ def write_niff2(data, filepath):
     niff2_vector_list_header_writer(
         vector_list_header, tri_nv_groups, vtx_nv_groups, buf)
     for tri_nv_group in tri_nv_groups:
-        niff2_tri_nv_group_node_writer(tri_nv_group, buf)
+        niff2_tri_nv_group_writer(tri_nv_group, buf)
     for vtx_nv_group in vtx_nv_groups:
-        niff2_vtx_nv_group_node_writer(vtx_nv_group, buf)
+        niff2_vtx_nv_group_writer(vtx_nv_group, buf)
 
     niff2_st_list_header_writer(st_list_header, st_groups, buf)
     for st_group in st_groups:
