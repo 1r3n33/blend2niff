@@ -69,9 +69,9 @@ def niff2_tri_list_header_writer(tlh, tri_groups, buf):
 
 
 #
-# TriGroup Node
+# Tri Group
 #
-class Niff2TriGroupNode:
+class Niff2TriGroup:
     def __init__(self, index, name_index, vtx_group_index, vtx_indices):
         tris = []
         for i in range(0, len(vtx_indices), 3):
@@ -91,7 +91,7 @@ class Niff2TriGroupNode:
         self.tri_color_group_index = 0  # Do not use BAD_INDEX
         self.vtx_color_group_index = vtx_group_index+1
         self.tri_nv_group_index = 0  # Do not use BAD_INDEX
-        self.vtx_nv_group_index = 0  # Do not use BAD_INDEX
+        self.vtx_nv_group_index = vtx_group_index+1
         self.st_group_index = 0  # Do not use BAD_INDEX
         self.tris = tris
 
@@ -99,11 +99,11 @@ class Niff2TriGroupNode:
         return self.this_tri_group_index
 
 
-def niff2_tri_group_node_builder(tri_group_index, tri_group_name_index, vtx_group_index, vtx_indices):
-    return Niff2TriGroupNode(tri_group_index, tri_group_name_index, vtx_group_index, vtx_indices)
+def niff2_tri_group_builder(tri_group_index, tri_group_name_index, vtx_group_index, vtx_indices):
+    return Niff2TriGroup(tri_group_index, tri_group_name_index, vtx_group_index, vtx_indices)
 
 
-def niff2_tri_group_node_writer(tri_group, buf):
+def niff2_tri_group_writer(tri_group, buf):
     buf += tri_group.tri_group_tag.to_bytes(4, BYTE_ORDER)
     buf += tri_group.this_tri_group_index.to_bytes(4, BYTE_ORDER)
     buf += tri_group.tri_group_header_size.to_bytes(4, BYTE_ORDER)
@@ -126,7 +126,7 @@ def niff2_tri_group_node_writer(tri_group, buf):
 
 
 #
-# TriNode
+# Tri Node
 #
 class Niff2TriNode:
     def __init__(self, index, vtx_indices):
@@ -137,15 +137,15 @@ class Niff2TriNode:
         self.tri_color_index = 0
         self.vtx_index0 = vtx_indices[0]
         self.st_index0 = 0
-        self.vtx_nv_index0 = 0
+        self.vtx_nv_index0 = vtx_indices[0]
         self.vtx_color_index0 = vtx_indices[0]
         self.vtx_index1 = vtx_indices[1]
         self.st_index1 = 0
-        self.vtx_nv_index1 = 0
+        self.vtx_nv_index1 = vtx_indices[1]
         self.vtx_color_index1 = vtx_indices[1]
         self.vtx_index2 = vtx_indices[2]
         self.st_index2 = 0
-        self.vtx_nv_index2 = 0
+        self.vtx_nv_index2 = vtx_indices[2]
         self.vtx_color_index2 = vtx_indices[2]
         self.nintendo_extension_block_size = 0
         self.user_extension_block_size = 0

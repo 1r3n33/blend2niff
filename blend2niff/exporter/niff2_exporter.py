@@ -31,7 +31,7 @@ from .niff2_shape import (niff2_shape_list_header_builder, niff2_shape_list_head
 from .niff2_st import (niff2_st_list_header_builder, niff2_st_list_header_writer,
                        niff2_st_group_node_builder, niff2_st_group_node_writer)
 from .niff2_tri import (niff2_tri_list_header_builder, niff2_tri_list_header_writer,
-                        niff2_tri_group_node_builder, niff2_tri_group_node_writer)
+                        niff2_tri_group_builder, niff2_tri_group_writer)
 from .niff2_vector import (niff2_vector_list_header_builder, niff2_vector_list_header_writer,
                            niff2_tri_nv_group_builder, niff2_tri_nv_group_writer,
                            niff2_vtx_nv_group_builder, niff2_vtx_nv_group_writer)
@@ -179,7 +179,7 @@ def write_niff2(data, filepath):
         mesh.calc_loop_triangles()
         for tri in mesh.loop_triangles:
             vtx_indices += list(tri.vertices)
-        tri_group = niff2_tri_group_node_builder(
+        tri_group = niff2_tri_group_builder(
             tri_group_index, tri_group_name.index(), vtx_group.index(), vtx_indices)
         tri_groups.append(tri_group)
 
@@ -424,7 +424,7 @@ def write_niff2(data, filepath):
 
     niff2_tri_list_header_writer(tri_list_header, tri_groups, buf)
     for tri_group in tri_groups:
-        niff2_tri_group_node_writer(tri_group, buf)
+        niff2_tri_group_writer(tri_group, buf)
 
     niff2_color_list_header_writer(
         color_list_header, tri_color_groups, vtx_color_groups, buf)
