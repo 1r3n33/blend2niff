@@ -74,7 +74,8 @@ def write_niff2(data, filepath):
     default_material_name = niff2_name_node_builder(
         len(names), "default_material.mat")
     names.append(default_material_name)
-    default_material = niff2_mat_node_builder(0, default_material_name.index())
+    default_material = niff2_mat_node_builder(0, default_material_name.index(),
+                                              [1.0, 0.0, 0.0, 1.0])
     materials.append(default_material)
 
     # NIFF2 VtxGroup <-> Blender Mesh (1 vtx_group per mesh)
@@ -297,7 +298,7 @@ def write_niff2(data, filepath):
         names.append(light_name)
 
         light_node = niff2_light_node_builder(len(lights), light_name.index(),
-                                              [0.05, 0.05, 0.05], light.color, -matrix[2].xyz)
+                                              [0.05, 0.05, 0.05], light.color, matrix[2].xyz)
         lights.append(light_node)
 
     # NIFF2 Header

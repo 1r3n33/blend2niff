@@ -77,21 +77,21 @@ def niff2_mat_list_header_writer(mat_list_header, materials, buf):
 # Mat Node
 #
 class Niff2MatNode:
-    def __init__(self, index, name_index):
+    def __init__(self, index, name_index, diffuse_rgba):
         self.mat_tag = TAG_MAT
         self.this_mat_index = index
         self.mat_size = (52*4)
         self.mat_name_index = name_index
         self.mat_type = MAT_TYPE_NIFF
-        self.mat_shade_type = MAT_SHADE_LIGHT_OFF | MAT_SHADE_SMOOTH
-        self.mat_color_type0 = MAT_CC_NIFF_VTX
+        self.mat_shade_type = MAT_SHADE_LIGHT_LOCAL | MAT_SHADE_SMOOTH
+        self.mat_color_type0 = MAT_CC_NIFF_PRIM
         self.mat_color_type1 = MAT_CC_NIFF_NONE
-        self.mat_alpha_type0 = MAT_CC_NIFF_VTX_ALPHA
+        self.mat_alpha_type0 = MAT_CC_NIFF_PRIM_ALPHA
         self.mat_alpha_type1 = MAT_CC_NIFF_NONE
-        self.prim_red = 0.8
-        self.prim_green = 0.1
-        self.prim_blue = 0.1
-        self.prim_alpha = 1.0
+        self.prim_red = diffuse_rgba[0]
+        self.prim_green = diffuse_rgba[1]
+        self.prim_blue = diffuse_rgba[2]
+        self.prim_alpha = diffuse_rgba[3]
         self.user_flag0 = 0
         self.user_flag1 = 0
         self.user_flag2 = 0
@@ -100,7 +100,7 @@ class Niff2MatNode:
         self.user_flag5 = 0
         self.user_flag6 = 0
         self.user_flag7 = 0
-        self.local_light_index = BAD_INDEX
+        self.local_light_index = 0
         self.tex_num = 0
         self.nintendo_extension_block_size = (26*4)
         self.user_extension_block_size = 0
@@ -135,8 +135,8 @@ class Niff2MatNode:
         return self.this_mat_index
 
 
-def niff2_mat_node_builder(index, name_index):
-    return Niff2MatNode(index, name_index)
+def niff2_mat_node_builder(index, name_index, diffuse_rgba):
+    return Niff2MatNode(index, name_index, diffuse_rgba)
 
 
 def niff2_mat_node_writer(mat, buf):
