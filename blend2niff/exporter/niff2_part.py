@@ -1,3 +1,5 @@
+"""NIFF2 Shape Parts."""
+
 #
 # Consts
 #
@@ -58,32 +60,24 @@ def niff2_part_list_header_writer(plh, parts, buf):
 # Part Node
 #
 class Niff2PartNode:
-    part_tag: int
-    this_part_index: int
-    part_size: int
-    part_name_index: int
-    mat_index: int
-    tri_group_index: int
-    part_tri_num: int
-    nintendo_extension_block_size: int
-    user_extension_block_size: int
+    def __init__(self, index, name_index, tri_group_index, mat_index, tri_indices):
+        self.part_tag = TAG_PART
+        self.this_part_index = index
+        self.part_size = (9*4) + (len(tri_indices)*4)
+        self.part_name_index = name_index
+        self.mat_index = mat_index
+        self.tri_group_index = tri_group_index
+        self.part_tri_num = len(tri_indices)
+        self.nintendo_extension_block_size = 0
+        self.user_extension_block_size = 0
+        self.tri_indices = tri_indices
 
     def index(self):
         return self.this_part_index
 
 
-def niff2_part_node_builder(part_index, part_name_index, part_tri_group_index, part_mat_index):
-    part = Niff2PartNode()
-    part.part_tag = TAG_PART
-    part.this_part_index = part_index
-    part.part_size = 9*4
-    part.part_name_index = part_name_index
-    part.mat_index = part_mat_index
-    part.tri_group_index = part_tri_group_index
-    part.part_tri_num = 0
-    part.nintendo_extension_block_size = 0
-    part.user_extension_block_size = 0
-    return part
+def niff2_part_node_builder(index, name_index, tri_group_index, mat_index, tri_indices):
+    return Niff2PartNode(index, name_index, tri_group_index, mat_index, tri_indices)
 
 
 def niff2_part_node_writer(part, buf):
@@ -94,6 +88,10 @@ def niff2_part_node_writer(part, buf):
     buf += part.mat_index.to_bytes(4, BYTE_ORDER)
     buf += part.tri_group_index.to_bytes(4, BYTE_ORDER)
     buf += part.part_tri_num.to_bytes(4, BYTE_ORDER)
+
+    for index in part.tri_indices:
+        buf += index.to_bytes(4, BYTE_ORDER)
+
     buf += part.nintendo_extension_block_size.to_bytes(4, BYTE_ORDER)
     buf += part.user_extension_block_size.to_bytes(4, BYTE_ORDER)
     return buf
