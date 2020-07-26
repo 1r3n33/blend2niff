@@ -23,7 +23,7 @@ from .niff2_name import (niff2_name_list_header_builder, niff2_name_list_header_
 from .niff2_obj import (niff2_obj_list_header_builder,
                         niff2_obj_list_header_writer, niff2_obj_node_builder, niff2_obj_node_writer)
 from .niff2_part import (niff2_part_list_header_builder, niff2_part_list_header_writer,
-                         niff2_part_node_writer)
+                         niff2_part_node_builder, niff2_part_node_writer)
 from .niff2_scene import (niff2_scene_header_builder,
                           niff2_scene_header_writer)
 from .niff2_shape import (niff2_shape_list_header_builder, niff2_shape_list_header_writer,
@@ -69,7 +69,7 @@ def write_niff2(data, filepath):
     scene_name = niff2_name_node_builder(len(names), filename+".scene")
     names.append(scene_name)
 
-    # Niff2 Material: Create a single default material
+    # NIFF2 Materials: Create a single default material
     materials = []
     default_material_name = niff2_name_node_builder(
         len(names), "default_material.mat")
@@ -77,6 +77,19 @@ def write_niff2(data, filepath):
     default_material = niff2_mat_node_builder(0, default_material_name.index(),
                                               [1.0, 0.0, 0.0, 1.0])
     materials.append(default_material)
+
+    # NIFF2 Materials: Create meshes materials
+    materials_by_mesh = {}
+    for obj in mesh_objs:
+        mesh = obj.data
+        materials_by_mesh[mesh] = []
+        for mat in mesh.materials:
+            mat_name = niff2_name_node_builder(len(names), mat.name+".mat")
+            names.append(mat_name)
+            mat_node = niff2_mat_node_builder(
+                len(materials), mat_name.index(), mat.diffuse_color)
+            materials.append(mat_node)
+            materials_by_mesh[mesh].append(mat_node)
 
     # NIFF2 VtxGroup <-> Blender Mesh (1 vtx_group per mesh)
     vtx_groups = []
@@ -173,6 +186,7 @@ def write_niff2(data, filepath):
 
     # NIFF2 TriGroup <-> Blender Mesh (1 tri_group per mesh)
     tri_groups = []
+    tri_group_by_mesh = {}
     for tri_group_index, mesh, vtx_group in zip(range(len(data.meshes)), data.meshes, vtx_groups):
         tri_group_name = niff2_name_node_builder(len(names), mesh.name+".tri")
         names.append(tri_group_name)
@@ -183,17 +197,44 @@ def write_niff2(data, filepath):
         tri_group = niff2_tri_group_builder(
             tri_group_index, tri_group_name.index(), vtx_group.index(), vtx_indices)
         tri_groups.append(tri_group)
+        tri_group_by_mesh[mesh] = tri_group
 
-    # NIFF2 Part: Not supported
+    # NIFF2 Parts: Create meshes parts
     parts = []
+    parts_by_mesh = {}
+    for obj in mesh_objs:
+        mesh = obj.data
+        parts_by_mesh[mesh] = []
+        mesh.calc_loop_triangles()
+
+        for mat_index in range(len(mesh.materials)):
+            tri_indices = []
+
+            for tri_index, tri in zip(range(len(mesh.loop_triangles)), mesh.loop_triangles):
+                if tri.material_index == mat_index:
+                    tri_indices.append(tri_index)
+
+            part_name = niff2_name_node_builder(
+                len(names), mesh.name+".part."+str(mat_index).zfill(2))
+            names.append(part_name)
+
+            tri_group_index = tri_group_by_mesh[mesh].index()
+            mat_index = materials_by_mesh[mesh][mat_index].index()
+            part_node = niff2_part_node_builder(
+                len(parts), part_name.index(), tri_group_index, mat_index, tri_indices)
+            parts.append(part_node)
+            parts_by_mesh[mesh].append(part_node)
 
     # NIFF2 Shape <-> Blender Mesh
     shapes = []
     for shape_index, mesh, tri_group in zip(range(len(data.meshes)), data.meshes, tri_groups):
         shape_name = niff2_name_node_builder(len(names), mesh.name+".shape")
         names.append(shape_name)
-        shape = niff2_shape_node_builder(
-            shape_index, shape_name.index(), tri_group.index(), default_material.index())
+        shape = niff2_shape_node_builder(shape_index,
+                                         shape_name.index(),
+                                         tri_group.index(),
+                                         default_material.index(),
+                                         parts_by_mesh[mesh])
         shapes.append(shape)
 
     # NIFF2 Anim: 1 anim per object

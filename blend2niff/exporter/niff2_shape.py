@@ -71,40 +71,28 @@ def niff2_shape_list_header_writer(slh, shapes, buf):
 # Shape Node
 #
 class Niff2ShapeNode:
-    shape_tag: int
-    this_shape_index: int
-    shape_size: int
-    shape_name_index: int
-    shape_type: int
-    shape_tri_link: int
-    shape_mat_link: int
-    shape_part_num: int
-    nintendo_extension_block_size: int
-    user_extension_block_size: int
-    kind_of_node_for_geometry: int
-    external_mat_file_name_index: int
-    external_mat_name_index: int
+    def __init__(self, index, name_index, tri_group_index, mat_index, parts):
+        self.shape_tag = TAG_SHAPE
+        self.this_shape_index = index
+        self.shape_size = (10*4) + (3*4) + (len(parts)*4)
+        self.shape_name_index = name_index
+        self.shape_type = SHAPE_TYPE_ZB | SHAPE_TYPE_CULL_BACK
+        self.shape_tri_link = tri_group_index
+        self.shape_mat_link = mat_index
+        self.shape_part_num = len(parts)
+        self.nintendo_extension_block_size = (3*4)
+        self.user_extension_block_size = 0
+        self.kind_of_node_for_geometry = TAG_TRI_GROUP
+        self.external_mat_file_name_index = BAD_INDEX
+        self.external_mat_name_index = BAD_INDEX
+        self.parts = parts
 
     def index(self):
         return self.this_shape_index
 
 
-def niff2_shape_node_builder(shape_index, shape_name_index, shape_tri_group_index, shape_mat_index):
-    shape = Niff2ShapeNode()
-    shape.shape_tag = TAG_SHAPE
-    shape.this_shape_index = shape_index
-    shape.shape_size = (10*4) + (3*4)
-    shape.shape_name_index = shape_name_index
-    shape.shape_type = SHAPE_TYPE_ZB | SHAPE_TYPE_CULL_BACK
-    shape.shape_tri_link = shape_tri_group_index
-    shape.shape_mat_link = shape_mat_index
-    shape.shape_part_num = 0
-    shape.nintendo_extension_block_size = (3*4)
-    shape.user_extension_block_size = 0
-    shape.kind_of_node_for_geometry = TAG_TRI_GROUP
-    shape.external_mat_file_name_index = BAD_INDEX
-    shape.external_mat_name_index = BAD_INDEX
-    return shape
+def niff2_shape_node_builder(index, name_index, tri_group_index, mat_index, parts):
+    return Niff2ShapeNode(index, name_index, tri_group_index, mat_index, parts)
 
 
 def niff2_shape_node_writer(shape, buf):
@@ -118,6 +106,10 @@ def niff2_shape_node_writer(shape, buf):
     buf += shape.shape_part_num.to_bytes(4, BYTE_ORDER)
     buf += shape.nintendo_extension_block_size.to_bytes(4, BYTE_ORDER)
     buf += shape.user_extension_block_size.to_bytes(4, BYTE_ORDER)
+
+    for part in shape.parts:
+        buf += part.index().to_bytes(4, BYTE_ORDER)
+
     buf += shape.kind_of_node_for_geometry.to_bytes(4, BYTE_ORDER)
     buf += shape.external_mat_file_name_index.to_bytes(4, BYTE_ORDER)
     buf += shape.external_mat_name_index.to_bytes(4, BYTE_ORDER)
