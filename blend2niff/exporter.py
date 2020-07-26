@@ -2,54 +2,71 @@
 
 import bpy
 from bpy.types import (Camera, Light, Mesh)
-from .niff2_anim import (niff2_anim_list_header_builder, niff2_anim_list_header_writer,
-                         niff2_anim_group_builder, niff2_anim_group_writer,
-                         niff2_anim_node_builder)
-from .niff2_camera import (niff2_cam_list_header_builder, niff2_cam_list_header_writer,
-                           niff2_cam_node_builder, niff2_cam_node_writer)
-from .niff2_color import (niff2_color_list_header_builder, niff2_color_list_header_writer,
-                          niff2_tri_color_group_node_builder, niff2_tri_color_group_node_writer,
-                          niff2_vtx_color_group_node_builder, niff2_vtx_color_group_node_writer)
-from .niff2_env import (niff2_env_list_header_builder, niff2_env_list_header_writer,
-                        niff2_env_node_builder, niff2_env_node_writer)
-from .niff2_header import (Niff2FileHeader,
-                           niff2_file_header_builder, niff2_file_header_writer)
-from .niff2_light import (niff2_light_list_header_builder, niff2_light_list_header_writer,
-                          niff2_light_node_builder, niff2_light_node_writer)
-from .niff2_mat import (niff2_mat_list_header_builder, niff2_mat_list_header_writer,
-                        niff2_mat_node_builder, niff2_mat_node_writer)
-from .niff2_name import (niff2_name_list_header_builder, niff2_name_list_header_writer,
-                         niff2_name_node_builder, niff2_name_node_writer)
-from .niff2_obj import (niff2_obj_list_header_builder,
-                        niff2_obj_list_header_writer, niff2_obj_node_builder, niff2_obj_node_writer)
-from .niff2_part import (niff2_part_list_header_builder, niff2_part_list_header_writer,
-                         niff2_part_node_builder, niff2_part_node_writer)
-from .niff2_scene import (niff2_scene_header_builder,
-                          niff2_scene_header_writer)
-from .niff2_shape import (niff2_shape_list_header_builder, niff2_shape_list_header_writer,
-                          niff2_shape_node_builder, niff2_shape_node_writer)
-from .niff2_st import (niff2_st_list_header_builder, niff2_st_list_header_writer,
-                       niff2_st_group_node_builder, niff2_st_group_node_writer)
-from .niff2_tri import (niff2_tri_list_header_builder, niff2_tri_list_header_writer,
-                        niff2_tri_group_builder, niff2_tri_group_writer)
-from .niff2_vector import (niff2_vector_list_header_builder, niff2_vector_list_header_writer,
-                           niff2_tri_nv_group_builder, niff2_tri_nv_group_writer,
-                           niff2_vtx_nv_group_builder, niff2_vtx_nv_group_writer)
-from .niff2_vtx import (niff2_vtx_list_header_builder, niff2_vtx_list_header_writer,
-                        niff2_vtx_group_node_builder, niff2_vtx_group_node_writer)
-from .niff2_misc import (niff2_chain_root_list_header_builder, niff2_chain_root_list_header_writer,
-                         niff2_ci_img_list_header_builder, niff2_ci_img_list_header_writer,
-                         niff2_cluster_list_header_builder, niff2_cluster_list_header_writer,
-                         niff2_coll_list_header_builder, niff2_coll_list_header_writer,
-                         niff2_color_palette_list_header_builder, niff2_color_palette_list_header_writer,
-                         niff2_effector_list_header_builder, niff2_effector_list_header_writer,
-                         niff2_envelope_list_header_builder, niff2_envelope_list_header_writer,
-                         niff2_external_name_list_header_builder, niff2_external_name_list_header_writer,
-                         niff2_joint_list_header_builder, niff2_joint_list_header_writer,
-                         niff2_switch_list_header_builder, niff2_switch_list_header_writer,
-                         niff2_tex_img_list_header_builder, niff2_tex_img_list_header_writer,
-                         niff2_tex_list_header_builder, niff2_tex_list_header_writer,
-                         niff2_weight_list_header_builder, niff2_weight_list_header_writer)
+from blend2niff.niff2.niff2_anim import (
+    niff2_anim_list_header_builder, niff2_anim_list_header_writer,
+    niff2_anim_group_builder, niff2_anim_group_writer,
+    niff2_anim_node_builder)
+from blend2niff.niff2.niff2_camera import (
+    niff2_cam_list_header_builder, niff2_cam_list_header_writer,
+    niff2_cam_node_builder, niff2_cam_node_writer)
+from blend2niff.niff2.niff2_color import (
+    niff2_color_list_header_builder, niff2_color_list_header_writer,
+    niff2_tri_color_group_node_builder, niff2_tri_color_group_node_writer,
+    niff2_vtx_color_group_node_builder, niff2_vtx_color_group_node_writer)
+from blend2niff.niff2.niff2_env import (
+    niff2_env_list_header_builder, niff2_env_list_header_writer,
+    niff2_env_node_builder, niff2_env_node_writer)
+from blend2niff.niff2.niff2_header import (
+    Niff2FileHeader,
+    niff2_file_header_builder, niff2_file_header_writer)
+from blend2niff.niff2.niff2_light import (
+    niff2_light_list_header_builder, niff2_light_list_header_writer,
+    niff2_light_node_builder, niff2_light_node_writer)
+from blend2niff.niff2.niff2_mat import (
+    niff2_mat_list_header_builder, niff2_mat_list_header_writer,
+    niff2_mat_node_builder, niff2_mat_node_writer)
+from blend2niff.niff2.niff2_name import (
+    niff2_name_list_header_builder, niff2_name_list_header_writer,
+    niff2_name_node_builder, niff2_name_node_writer)
+from blend2niff.niff2.niff2_obj import (
+    niff2_obj_list_header_builder,
+    niff2_obj_list_header_writer, niff2_obj_node_builder, niff2_obj_node_writer)
+from blend2niff.niff2.niff2_part import (
+    niff2_part_list_header_builder, niff2_part_list_header_writer,
+    niff2_part_node_builder, niff2_part_node_writer)
+from blend2niff.niff2.niff2_scene import (
+    niff2_scene_header_builder,
+    niff2_scene_header_writer)
+from blend2niff.niff2.niff2_shape import (
+    niff2_shape_list_header_builder, niff2_shape_list_header_writer,
+    niff2_shape_node_builder, niff2_shape_node_writer)
+from blend2niff.niff2.niff2_st import (
+    niff2_st_list_header_builder, niff2_st_list_header_writer,
+    niff2_st_group_node_builder, niff2_st_group_node_writer)
+from blend2niff.niff2.niff2_tri import (
+    niff2_tri_list_header_builder, niff2_tri_list_header_writer,
+    niff2_tri_group_builder, niff2_tri_group_writer)
+from blend2niff.niff2.niff2_vector import (
+    niff2_vector_list_header_builder, niff2_vector_list_header_writer,
+    niff2_tri_nv_group_builder, niff2_tri_nv_group_writer,
+    niff2_vtx_nv_group_builder, niff2_vtx_nv_group_writer)
+from blend2niff.niff2.niff2_vtx import (
+    niff2_vtx_list_header_builder, niff2_vtx_list_header_writer,
+    niff2_vtx_group_node_builder, niff2_vtx_group_node_writer)
+from blend2niff.niff2.niff2_misc import (
+    niff2_chain_root_list_header_builder, niff2_chain_root_list_header_writer,
+    niff2_ci_img_list_header_builder, niff2_ci_img_list_header_writer,
+    niff2_cluster_list_header_builder, niff2_cluster_list_header_writer,
+    niff2_coll_list_header_builder, niff2_coll_list_header_writer,
+    niff2_color_palette_list_header_builder, niff2_color_palette_list_header_writer,
+    niff2_effector_list_header_builder, niff2_effector_list_header_writer,
+    niff2_envelope_list_header_builder, niff2_envelope_list_header_writer,
+    niff2_external_name_list_header_builder, niff2_external_name_list_header_writer,
+    niff2_joint_list_header_builder, niff2_joint_list_header_writer,
+    niff2_switch_list_header_builder, niff2_switch_list_header_writer,
+    niff2_tex_img_list_header_builder, niff2_tex_img_list_header_writer,
+    niff2_tex_list_header_builder, niff2_tex_list_header_writer,
+    niff2_weight_list_header_builder, niff2_weight_list_header_writer)
 
 BAD_INDEX = 0xFFFFFFFF
 
