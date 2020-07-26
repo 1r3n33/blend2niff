@@ -1,10 +1,10 @@
 """NIFF2 Shape Tests."""
 
 import unittest
-from blend2niff.exporter.niff2_shape import (
+from blend2niff.niff2.niff2_shape import (
     niff2_shape_list_header_builder, niff2_shape_list_header_writer,
     niff2_shape_node_builder, niff2_shape_node_writer)
-from blend2niff.exporter.niff2_part import niff2_part_node_builder
+from blend2niff.niff2.niff2_part import niff2_part_node_builder
 
 
 class TestNiff2Shape(unittest.TestCase):

@@ -2,7 +2,7 @@
 
 import unittest
 
-from blend2niff.exporter.niff2_env import (
+from blend2niff.niff2.niff2_env import (
     niff2_env_list_header_builder, niff2_env_list_header_writer,
     niff2_env_node_builder, niff2_env_node_writer)
 

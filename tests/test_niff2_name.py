@@ -3,7 +3,7 @@
 import unittest
 from parameterized import parameterized
 
-from blend2niff.exporter.niff2_name import niff2_name_node_builder
+from blend2niff.niff2.niff2_name import niff2_name_node_builder
 
 
 class TestNiff2Name(unittest.TestCase):

@@ -5,7 +5,7 @@ from bpy_extras.io_utils import ExportHelper
 from bpy.props import StringProperty
 from bpy.types import Operator
 
-from blend2niff.exporter.niff2_exporter import write_niff2
+from blend2niff.niff2.niff2_exporter import write_niff2
 
 
 class N64Niff2Export(Operator, ExportHelper):

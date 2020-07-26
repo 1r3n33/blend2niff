@@ -1,7 +1,7 @@
 """NIFF2 Color Tests."""
 
 import unittest
-from blend2niff.exporter.niff2_color import (
+from blend2niff.niff2.niff2_color import (
     niff2_color_list_header_builder, niff2_tri_color_group_node_builder, niff2_vtx_color_group_node_builder)
 
 

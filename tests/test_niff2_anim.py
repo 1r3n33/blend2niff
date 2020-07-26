@@ -1,7 +1,7 @@
 """NIFF2 Anim Tests."""
 
 import unittest
-from blend2niff.exporter.niff2_anim import (
+from blend2niff.niff2.niff2_anim import (
     niff2_anim_list_header_builder, niff2_anim_list_header_writer,
     niff2_anim_group_builder, niff2_anim_group_writer,
     niff2_anim_node_builder, niff2_anim_node_writer)

@@ -1,7 +1,7 @@
 """NIFF2 Camera Tests."""
 
 import unittest
-from blend2niff.exporter.niff2_camera import (
+from blend2niff.niff2.niff2_camera import (
     niff2_cam_list_header_builder, niff2_cam_list_header_writer,
     niff2_cam_node_builder, niff2_cam_node_writer)
 

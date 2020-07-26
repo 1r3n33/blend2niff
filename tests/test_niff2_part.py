@@ -2,7 +2,7 @@
 
 import unittest
 
-from blend2niff.exporter.niff2_part import (
+from blend2niff.niff2.niff2_part import (
     niff2_part_list_header_builder, niff2_part_list_header_writer,
     niff2_part_node_builder, niff2_part_node_writer)
 

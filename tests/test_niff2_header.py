@@ -1,7 +1,7 @@
 """NIFF2 File Header Tests."""
 
 import unittest
-from blend2niff.exporter.niff2_header import(
+from blend2niff.niff2.niff2_header import(
     niff2_file_header_builder, niff2_file_header_writer)
 
 

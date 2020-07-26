@@ -2,7 +2,7 @@
 
 import unittest
 
-from blend2niff.exporter.niff2_scene import (
+from blend2niff.niff2.niff2_scene import (
     niff2_scene_header_builder, niff2_scene_header_writer)
 
 

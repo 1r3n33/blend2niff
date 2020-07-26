@@ -3,7 +3,7 @@
 import unittest
 from parameterized import parameterized
 
-from blend2niff.exporter.niff2_obj import (
+from blend2niff.niff2.niff2_obj import (
     niff2_obj_list_header_builder, niff2_obj_list_header_writer,
     niff2_obj_node_builder, niff2_obj_node_writer)
 

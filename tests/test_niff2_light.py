@@ -2,7 +2,7 @@
 
 import unittest
 
-from blend2niff.exporter.niff2_light import (niff2_light_list_header_builder, niff2_light_list_header_writer,
+from blend2niff.niff2.niff2_light import (niff2_light_list_header_builder, niff2_light_list_header_writer,
                                              niff2_light_node_builder, niff2_light_node_writer)
 
 

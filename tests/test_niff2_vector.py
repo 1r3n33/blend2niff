@@ -1,7 +1,7 @@
 """NIFF2 Vector Tests."""
 
 import unittest
-from blend2niff.exporter.niff2_vector import (
+from blend2niff.niff2.niff2_vector import (
     niff2_vector_list_header_builder, niff2_vector_list_header_writer,
     niff2_tri_nv_group_builder, niff2_tri_nv_group_writer,
     niff2_vtx_nv_group_builder, niff2_vtx_nv_group_writer)
