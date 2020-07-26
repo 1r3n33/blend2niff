@@ -88,10 +88,8 @@ def niff2_part_node_writer(part, buf):
     buf += part.mat_index.to_bytes(4, BYTE_ORDER)
     buf += part.tri_group_index.to_bytes(4, BYTE_ORDER)
     buf += part.part_tri_num.to_bytes(4, BYTE_ORDER)
-
-    for index in part.tri_indices:
-        buf += index.to_bytes(4, BYTE_ORDER)
-
     buf += part.nintendo_extension_block_size.to_bytes(4, BYTE_ORDER)
     buf += part.user_extension_block_size.to_bytes(4, BYTE_ORDER)
+    for index in part.tri_indices:
+        buf += index.to_bytes(4, BYTE_ORDER)
     return buf
