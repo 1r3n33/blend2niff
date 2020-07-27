@@ -1,6 +1,6 @@
 # blend2niff
 
-### [Blender](https://www.blender.org/) add-on to export to [N64 NIFF2](https://ultra64.ca/files/documentation/online-manuals/man-v5-1/niff/index.htm).
+## [Blender](https://www.blender.org/) add-on to export to [N64 NIFF2](https://ultra64.ca/files/documentation/online-manuals/man-v5-1/niff/index.htm)
 
 [![Download](https://img.shields.io/badge/download-latest-blue)](https://github.com/1r3n33/blend2niff/releases/latest)
 [![Build Status](https://travis-ci.com/1r3n33/blend2niff.svg?branch=master)](https://travis-ci.com/1r3n33/blend2niff)
