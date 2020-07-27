@@ -13,7 +13,7 @@ class TestNiff2SceneHeader(unittest.TestCase):
         self.assertEqual(scene_header.scene_header_tag, 0x00010000)
         self.assertEqual(scene_header.scene_header_size, 44)
         self.assertEqual(scene_header.scene_size, 1096)
-        self.assertEqual(scene_header.scene_cfg, 0x00000018)
+        self.assertEqual(scene_header.scene_cfg, 0x0000001C)
         self.assertEqual(scene_header.scene_name_index, 12)
         self.assertEqual(scene_header.scene_obj_link_num, 34)
         self.assertEqual(scene_header.scene_env_link_num, 78)
@@ -34,7 +34,7 @@ class TestNiff2SceneHeader(unittest.TestCase):
         byte_list = [0x00, 0x01, 0x00, 0x00,
                      0x00, 0x00, 0x00, 0x2C,
                      0x00, 0x00, 0x00, 0x78,
-                     0x00, 0x00, 0x00, 0x18,
+                     0x00, 0x00, 0x00, 0x1C,
                      0x00, 0x00, 0x00, 0x01,
                      0x00, 0x00, 0x00, 0x02,
                      0x00, 0x00, 0x00, 0x04,

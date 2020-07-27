@@ -68,6 +68,8 @@ from blend2niff.niff2.niff2_misc import (
     niff2_tex_list_header_builder, niff2_tex_list_header_writer,
     niff2_weight_list_header_builder, niff2_weight_list_header_writer)
 
+from blend2niff.helpers import correct_gamma
+
 BAD_INDEX = 0xFFFFFFFF
 
 
@@ -104,7 +106,7 @@ def write_niff2(data, filepath):
             mat_name = niff2_name_node_builder(len(names), mat.name+".mat")
             names.append(mat_name)
             mat_node = niff2_mat_node_builder(
-                len(materials), mat_name.index(), mat.diffuse_color)
+                len(materials), mat_name.index(), correct_gamma(mat.diffuse_color))
             materials.append(mat_node)
             materials_by_mesh[mesh].append(mat_node)
 
@@ -124,7 +126,7 @@ def write_niff2(data, filepath):
     # Niff2 ColorGroup: Create a single default color
     tri_color_groups = []
     vtx_color_groups = []
-    default_color = [0.8, 0.8, 0.8, 1.0]  # rgba
+    default_color = correct_gamma([0.8, 0.8, 0.8, 1.0])  # rgba
     default_tri_color_group = niff2_tri_color_group_node_builder(
         0, default_color)
     default_vtx_color_group = niff2_vtx_color_group_node_builder(
@@ -145,7 +147,8 @@ def write_niff2(data, filepath):
             for i in range(3):
                 vtx_index = tri.vertices[i]
                 loop_index = tri.loops[i]
-                color = mesh.vertex_colors[0].data[loop_index].color
+                color = correct_gamma(
+                    mesh.vertex_colors[0].data[loop_index].color)
                 vtx_colors[(vtx_index*4)+0] = color[0]
                 vtx_colors[(vtx_index*4)+1] = color[1]
                 vtx_colors[(vtx_index*4)+2] = color[2]
@@ -340,7 +343,7 @@ def write_niff2(data, filepath):
     env_name = niff2_name_node_builder(len(names), filename+".env")
     names.append(env_name)
     env_node = niff2_env_node_builder(
-        0, env_name.index(), data.worlds[0].color)
+        0, env_name.index(), correct_gamma(data.worlds[0].color))
     envs.append(env_node)
 
     # NIFF2 Light
@@ -355,8 +358,12 @@ def write_niff2(data, filepath):
         light_name = niff2_name_node_builder(len(names), light.name+".light")
         names.append(light_name)
 
-        light_node = niff2_light_node_builder(len(lights), light_name.index(),
-                                              [0.05, 0.05, 0.05], light.color, matrix[2].xyz)
+        light_node = niff2_light_node_builder(len(lights),
+                                              light_name.index(),
+                                              correct_gamma(
+                                                  [0.05, 0.05, 0.05]),
+                                              correct_gamma(light.color),
+                                              matrix[2].xyz)
         lights.append(light_node)
 
     # NIFF2 Header

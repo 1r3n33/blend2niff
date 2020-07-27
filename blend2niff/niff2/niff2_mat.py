@@ -121,9 +121,9 @@ class Niff2MatNode:
         self.mat_color_type1_for_fog = MAT_CC_NIFF_NONE
         self.mat_alpha_type0_for_fog = MAT_CC_NIFF_PRIM_ALPHA
         self.mat_alpha_type1_for_fog = MAT_CC_NIFF_NONE
-        self.prim_red_for_fog = 0.9
-        self.prim_green_for_fog = 0.9
-        self.prim_blue_for_fog = 0.9
+        self.prim_red_for_fog = 1.0
+        self.prim_green_for_fog = 1.0
+        self.prim_blue_for_fog = 1.0
         self.prim_alpha_for_fog = 1.0
         self.external_local_light_file_name_index = BAD_INDEX
         self.external_local_light_name_index = BAD_INDEX

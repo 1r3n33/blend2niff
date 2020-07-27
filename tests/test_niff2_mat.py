@@ -76,9 +76,9 @@ class TestNiff2Mat(unittest.TestCase):
         self.assertEqual(mat_node.mat_color_type1_for_fog, 0xFFFFFFFF)
         self.assertEqual(mat_node.mat_alpha_type0_for_fog, 0x00040000)
         self.assertEqual(mat_node.mat_alpha_type1_for_fog, 0xFFFFFFFF)
-        self.assertEqual(mat_node.prim_red_for_fog, 0.9)
-        self.assertEqual(mat_node.prim_green_for_fog, 0.9)
-        self.assertEqual(mat_node.prim_blue_for_fog, 0.9)
+        self.assertEqual(mat_node.prim_red_for_fog, 1.0)
+        self.assertEqual(mat_node.prim_green_for_fog, 1.0)
+        self.assertEqual(mat_node.prim_blue_for_fog, 1.0)
         self.assertEqual(mat_node.prim_alpha_for_fog, 1.0)
         self.assertEqual(
             mat_node.external_local_light_file_name_index, 0xFFFFFFFF)
@@ -133,9 +133,9 @@ class TestNiff2Mat(unittest.TestCase):
                      0xFF, 0xFF, 0xFF, 0xFF,
                      0x00, 0x04, 0x00, 0x00,
                      0xFF, 0xFF, 0xFF, 0xFF,
-                     0x3F, 0x66, 0x66, 0x66,
-                     0x3F, 0x66, 0x66, 0x66,
-                     0x3F, 0x66, 0x66, 0x66,
+                     0x3F, 0x80, 0x00, 0x00,
+                     0x3F, 0x80, 0x00, 0x00,
+                     0x3F, 0x80, 0x00, 0x00,
                      0x3F, 0x80, 0x00, 0x00,
                      0xFF, 0xFF, 0xFF, 0xFF,
                      0xFF, 0xFF, 0xFF, 0xFF,

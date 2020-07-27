@@ -21,12 +21,21 @@ BYTE_ORDER = 'big'
 # Scene Header
 #
 class Niff2SceneHeader:
-    def __init__(self, scene_name_index, scene_obj_link_num, scene_cam_link_num, scene_env_link_num, scene_light_link_num):
+    def __init__(self,
+                 scene_name_index,
+                 scene_obj_link_num,
+                 scene_cam_link_num,
+                 scene_env_link_num,
+                 scene_light_link_num):
         self.scene_header_tag = TAG_SCENE_HEADER
         self.scene_header_size = (11*4)
         self.scene_size = (11*4) + (5*4) + \
-            (scene_obj_link_num*4) + (scene_cam_link_num*4) + (scene_env_link_num*4) + (scene_light_link_num*4)
-        self.scene_cfg = SCENE_CFG_VIDEO_NTSC | SCENE_CFG_DIVOT | SCENE_CFG_DITHER
+            (scene_obj_link_num*4) + (scene_cam_link_num*4) + \
+            (scene_env_link_num*4) + (scene_light_link_num*4)
+        self.scene_cfg = SCENE_CFG_VIDEO_NTSC \
+            | SCENE_CFG_DIVOT \
+            | SCENE_CFG_DITHER \
+            | SCENE_CFG_GAMMA
         self.scene_name_index = scene_name_index
         self.scene_obj_link_num = scene_obj_link_num
         self.scene_env_link_num = scene_env_link_num
@@ -49,7 +58,11 @@ def niff2_scene_header_builder(scene_name_index, objs, cams, envs, lights):
     scene_cam_link_num = len(cams)
     scene_env_link_num = len(envs)
     scene_light_link_num = len(lights)
-    return Niff2SceneHeader(scene_name_index, scene_obj_link_num, scene_cam_link_num, scene_env_link_num, scene_light_link_num)
+    return Niff2SceneHeader(scene_name_index,
+                            scene_obj_link_num,
+                            scene_cam_link_num,
+                            scene_env_link_num,
+                            scene_light_link_num)
 
 
 def niff2_scene_header_writer(scene_header, buf):
