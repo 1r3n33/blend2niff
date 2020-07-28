@@ -1,7 +1,13 @@
-"""Tests about creating .nif file from Blender data."""
+"""Tests about creating .nif data from Blender data."""
 
 import unittest
-from bpy.types import (Material, Mesh, MeshVertex, Object)
+from bpy.types import (Material,
+                       Mesh,
+                       MeshLoopColor,
+                       MeshLoopColorLayer,
+                       MeshLoopTriangle,
+                       MeshVertex,
+                       Object)
 from blend2niff.exporter import Exporter
 
 
@@ -78,3 +84,38 @@ class TestExporter(unittest.TestCase):
 
         self.assertEqual(len(exporter.names), 1)
         self.assertEqual(len(exporter.vtx_groups), 1)
+
+    def test_create_color_groups(self):
+        not_a_mesh = Object()
+        mesh = Object()
+
+        mesh.data = Mesh()
+
+        vertex = MeshVertex()
+        mesh.data.vertices = [vertex]*3
+
+        red = MeshLoopColor()
+        red.color = [1.0, 0.0, 0.0, 1.0]
+        green = MeshLoopColor()
+        green.color = [0.0, 1.0, 0.0, 1.0]
+        blue = MeshLoopColor()
+        blue.color = [0.0, 0.0, 1.0, 1.0]
+
+        vertex_colors = MeshLoopColorLayer()
+        vertex_colors.data = [red, green, blue]
+        mesh.data.vertex_colors = [vertex_colors]
+
+        tri = MeshLoopTriangle()
+        tri.vertices = [0, 1, 2]
+        tri.loops = [0, 1, 2]
+        mesh.data.loop_triangles = [tri]
+
+        exporter = Exporter()
+        exporter.create_color_groups([not_a_mesh, mesh])
+
+        self.assertEqual(len(exporter.tri_color_groups),
+                         len(exporter.vtx_color_groups))
+        self.assertEqual(exporter.tri_color_groups[0].tri_color_num, 1)
+        self.assertEqual(exporter.tri_color_groups[1].tri_color_num, 1)
+        self.assertEqual(exporter.vtx_color_groups[0].vtx_color_num, 1)
+        self.assertEqual(exporter.vtx_color_groups[1].vtx_color_num, 3)

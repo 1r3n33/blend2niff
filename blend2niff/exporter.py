@@ -79,6 +79,8 @@ class Exporter:
         self.materials = []  # All materials, 0 is default material.
         self.materials_by_mesh = {}  # All NIFF2 materials by Blender mesh.
         self.vtx_groups = []  # All vertex groups
+        self.tri_color_groups = []  # All triangle color groups
+        self.vtx_color_groups = []  # All vertex color groups
 
     def create_name(self, name):
         """
@@ -141,6 +143,48 @@ class Exporter:
                                                          vtx_floats)
                 self.vtx_groups.append(vtx_group)
 
+    def create_color_groups(self, objs):
+        """
+        Create and register all vertex color groups and all triangle color groups.
+        Also create default grey-ish colors.
+        Make sure to have the same number of tri_color_groups & vtx_color_groups.
+        This prevents nifftools/checknb2.exe from crashing.
+        Do not support smooth groups: 1 color per vertex!
+        Indices are all aligned on both vertex coords and vertex colors.
+        """
+        default_color = correct_gamma([0.8, 0.8, 0.8, 1.0])  # rgba
+        default_tri_color_group = niff2_tri_color_group_node_builder(
+            0, default_color)
+        default_vtx_color_group = niff2_vtx_color_group_node_builder(
+            0, default_color)
+        self.tri_color_groups.append(default_tri_color_group)
+        self.vtx_color_groups.append(default_vtx_color_group)
+
+        for obj in objs:
+            if isinstance(obj.data, Mesh):
+                mesh = obj.data
+                mesh.calc_loop_triangles()
+                vtx_colors = [float]*len(mesh.vertices)*4
+
+                for tri in mesh.loop_triangles:
+                    for i in range(3):
+                        vtx_index = tri.vertices[i]
+                        loop_index = tri.loops[i]
+                        color = correct_gamma(
+                            mesh.vertex_colors[0].data[loop_index].color)
+                        vtx_colors[(vtx_index*4)+0] = color[0]
+                        vtx_colors[(vtx_index*4)+1] = color[1]
+                        vtx_colors[(vtx_index*4)+2] = color[2]
+                        vtx_colors[(vtx_index*4)+3] = color[3]
+
+                tri_color_group = niff2_tri_color_group_node_builder(
+                    len(self.tri_color_groups), default_color)
+                self.tri_color_groups.append(tri_color_group)
+
+                vtx_color_group = niff2_vtx_color_group_node_builder(
+                    len(self.vtx_color_groups), vtx_colors)
+                self.vtx_color_groups.append(vtx_color_group)
+
 
 #
 # Writer entry point
@@ -161,44 +205,7 @@ def write_niff2(data, filepath):
 
     exporter.create_vertex_groups(mesh_objs)
 
-    # Niff2 ColorGroup: Create a single default color
-    tri_color_groups = []
-    vtx_color_groups = []
-    default_color = correct_gamma([0.8, 0.8, 0.8, 1.0])  # rgba
-    default_tri_color_group = niff2_tri_color_group_node_builder(
-        0, default_color)
-    default_vtx_color_group = niff2_vtx_color_group_node_builder(
-        0, default_color)
-    tri_color_groups.append(default_tri_color_group)
-    vtx_color_groups.append(default_vtx_color_group)
-
-    # Niff2 ColorGroup: Create mesh vertex color group.
-    # (!) Make sure to have the same number of tri_color_groups & vtx_color_groups.
-    #     This prevents nifftools/checknb2.exe from crashing.
-    # (!) Do not support smooth groups: 1 color per vertex!
-    #     Indices are all aligned on both vertex coords and vertex colors.
-    for vtx_color_group_index, mesh in zip(range(len(data.meshes)), data.meshes):
-        mesh.calc_loop_triangles()
-        vtx_colors = [float]*len(mesh.vertices)*4
-
-        for tri in mesh.loop_triangles:
-            for i in range(3):
-                vtx_index = tri.vertices[i]
-                loop_index = tri.loops[i]
-                color = correct_gamma(
-                    mesh.vertex_colors[0].data[loop_index].color)
-                vtx_colors[(vtx_index*4)+0] = color[0]
-                vtx_colors[(vtx_index*4)+1] = color[1]
-                vtx_colors[(vtx_index*4)+2] = color[2]
-                vtx_colors[(vtx_index*4)+3] = color[3]
-
-        tri_color_group = niff2_tri_color_group_node_builder(
-            1+vtx_color_group_index, default_color)
-        tri_color_groups.append(tri_color_group)
-
-        vtx_color_group = niff2_vtx_color_group_node_builder(
-            1+vtx_color_group_index, vtx_colors)
-        vtx_color_groups.append(vtx_color_group)
+    exporter.create_color_groups(mesh_objs)
 
     # Niff2 VectorGroup: Create a single default normal vector
     tri_nv_groups = []
@@ -405,7 +412,7 @@ def write_niff2(data, filepath):
     vtx_list_header = niff2_vtx_list_header_builder(exporter.vtx_groups)
     tri_list_header = niff2_tri_list_header_builder(tri_groups)
     color_list_header = niff2_color_list_header_builder(
-        tri_color_groups, vtx_color_groups)
+        exporter.tri_color_groups, exporter.vtx_color_groups)
     vector_list_header = niff2_vector_list_header_builder(
         tri_nv_groups, vtx_nv_groups)
     st_list_header = niff2_st_list_header_builder(st_groups)
@@ -521,10 +528,10 @@ def write_niff2(data, filepath):
         niff2_tri_group_writer(tri_group, buf)
 
     niff2_color_list_header_writer(
-        color_list_header, tri_color_groups, vtx_color_groups, buf)
-    for tri_color_group in tri_color_groups:
+        color_list_header, exporter.tri_color_groups, exporter.vtx_color_groups, buf)
+    for tri_color_group in exporter.tri_color_groups:
         niff2_tri_color_group_node_writer(tri_color_group, buf)
-    for vtx_color_group in vtx_color_groups:
+    for vtx_color_group in exporter.vtx_color_groups:
         niff2_vtx_color_group_node_writer(vtx_color_group, buf)
 
     niff2_vector_list_header_writer(
