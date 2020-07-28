@@ -73,49 +73,76 @@ from blend2niff.helpers import correct_gamma
 BAD_INDEX = 0xFFFFFFFF
 
 
+class Exporter:
+    def __init__(self):
+        self.names = []  # All names.
+        self.materials = []  # All materials, 0 is default material.
+        self.materials_by_mesh = {}  # All NIFF2 materials by Blender mesh.
+
+    def create_name(self, name):
+        """
+        Create, register and return a name.
+        """
+        name_node = niff2_name_node_builder(len(self.names), name)
+        self.names.append(name_node)
+        return name_node
+
+    def create_materials(self, objs):
+        """
+        Create and register all scene materials including the default material (index 0).
+        TODO: Revise the interface to remove objs as the goal is to create all mats from scene.
+        """
+        # Create full red default material
+        default_material_name = self.create_name("default_material.mat")
+        default_material = niff2_mat_node_builder(0,
+                                                  default_material_name.index(),
+                                                  [1.0, 0.0, 0.0, 1.0])
+        self.materials.append(default_material)
+
+        # For each mesh
+        for obj in objs:
+            if isinstance(obj.data, Mesh):
+                mesh = obj.data
+                self.materials_by_mesh[mesh] = []
+
+                # Create mesh materials
+                for mat in mesh.materials:
+                    mat_name = self.create_name(mat.name+".mat")
+                    mat_node = niff2_mat_node_builder(len(self.materials),
+                                                      mat_name.index(),
+                                                      correct_gamma(mat.diffuse_color))
+                    self.materials.append(mat_node)
+                    self.materials_by_mesh[mesh].append(mat_node)
+
+    def get_default_material(self):
+        """
+        Return default material.
+        """
+        return self.materials[0]
+
+
 #
 # Writer entry point
 #
 def write_niff2(data, filepath):
     print("running write_niff2...")
+    exporter = Exporter()
 
     filename = bpy.path.display_name_from_filepath(filepath)
 
     mesh_objs = list(
         filter(lambda obj: isinstance(obj.data, Mesh), data.objects))
 
-    names = []
-    scene_name = niff2_name_node_builder(len(names), filename+".scene")
-    names.append(scene_name)
+    scene_name = exporter.create_name(filename+".scene")
 
-    # NIFF2 Materials: Create a single default material
-    materials = []
-    default_material_name = niff2_name_node_builder(
-        len(names), "default_material.mat")
-    names.append(default_material_name)
-    default_material = niff2_mat_node_builder(0, default_material_name.index(),
-                                              [1.0, 0.0, 0.0, 1.0])
-    materials.append(default_material)
-
-    # NIFF2 Materials: Create meshes materials
-    materials_by_mesh = {}
-    for obj in mesh_objs:
-        mesh = obj.data
-        materials_by_mesh[mesh] = []
-        for mat in mesh.materials:
-            mat_name = niff2_name_node_builder(len(names), mat.name+".mat")
-            names.append(mat_name)
-            mat_node = niff2_mat_node_builder(
-                len(materials), mat_name.index(), correct_gamma(mat.diffuse_color))
-            materials.append(mat_node)
-            materials_by_mesh[mesh].append(mat_node)
+    exporter.create_materials(mesh_objs)
+    default_material = exporter.get_default_material()
 
     # NIFF2 VtxGroup <-> Blender Mesh (1 vtx_group per mesh)
     vtx_groups = []
     for vtx_group_index, obj in zip(range(len(mesh_objs)), mesh_objs):
         mesh = obj.data
-        vtx_group_name = niff2_name_node_builder(len(names), mesh.name+".vtx")
-        names.append(vtx_group_name)
+        vtx_group_name = exporter.create_name(mesh.name+".vtx")
         vtx_floats = []
         for vtx in mesh.vertices:
             vtx_floats += list(vtx.co)
@@ -208,8 +235,7 @@ def write_niff2(data, filepath):
     tri_groups = []
     tri_group_by_mesh = {}
     for tri_group_index, mesh, vtx_group in zip(range(len(data.meshes)), data.meshes, vtx_groups):
-        tri_group_name = niff2_name_node_builder(len(names), mesh.name+".tri")
-        names.append(tri_group_name)
+        tri_group_name = exporter.create_name(mesh.name+".tri")
         vtx_indices = []
         mesh.calc_loop_triangles()
         for tri in mesh.loop_triangles:
@@ -234,12 +260,11 @@ def write_niff2(data, filepath):
                 if tri.material_index == mat_index:
                     tri_indices.append(tri_index)
 
-            part_name = niff2_name_node_builder(
-                len(names), mesh.name+".part."+str(mat_index).zfill(2))
-            names.append(part_name)
+            part_name = exporter.create_name(
+                mesh.name+".part."+str(mat_index).zfill(2))
 
             tri_group_index = tri_group_by_mesh[mesh].index()
-            mat_index = materials_by_mesh[mesh][mat_index].index()
+            mat_index = exporter.materials_by_mesh[mesh][mat_index].index()
             part_node = niff2_part_node_builder(
                 len(parts), part_name.index(), tri_group_index, mat_index, tri_indices)
             parts.append(part_node)
@@ -248,8 +273,7 @@ def write_niff2(data, filepath):
     # NIFF2 Shape <-> Blender Mesh
     shapes = []
     for shape_index, mesh, tri_group in zip(range(len(data.meshes)), data.meshes, tri_groups):
-        shape_name = niff2_name_node_builder(len(names), mesh.name+".shape")
-        names.append(shape_name)
+        shape_name = exporter.create_name(mesh.name+".shape")
         shape = niff2_shape_node_builder(shape_index,
                                          shape_name.index(),
                                          tri_group.index(),
@@ -260,8 +284,7 @@ def write_niff2(data, filepath):
     # NIFF2 Anim: 1 anim per object
     anim_groups = []
     for anim_index, obj, in zip(range(len(mesh_objs)), mesh_objs):
-        anim_name = niff2_name_node_builder(len(names), obj.name+".anim")
-        names.append(anim_name)
+        anim_name = exporter.create_name(obj.name+".anim")
         anim_node = niff2_anim_node_builder(
             obj.location, obj.rotation_euler, obj.scale)
         anim_group = niff2_anim_group_builder(
@@ -270,11 +293,16 @@ def write_niff2(data, filepath):
 
     # NIFF2 Obj: Blender Object
     objs = []
-    for obj_index, obj, shape, anim_group in zip(range(len(mesh_objs)), mesh_objs, shapes, anim_groups):
-        obj_name = niff2_name_node_builder(len(names), obj.name+".obj")
-        names.append(obj_name)
-        obj = niff2_obj_node_builder(
-            obj_index, obj_name.index(), shape.index(), default_material.index(), anim_group.index())
+    for obj_index, obj, shape, anim_group in zip(range(len(mesh_objs)),
+                                                 mesh_objs,
+                                                 shapes,
+                                                 anim_groups):
+        obj_name = exporter.create_name(obj.name+".obj")
+        obj = niff2_obj_node_builder(obj_index,
+                                     obj_name.index(),
+                                     shape.index(),
+                                     default_material.index(),
+                                     anim_group.index())
         objs.append(obj)
 
     # NIFF2 Cam.
@@ -286,62 +314,50 @@ def write_niff2(data, filepath):
         cam = obj.data
         matrix = obj.matrix_world.transposed()
 
-        eye_anim_name = niff2_name_node_builder(
-            len(names), cam.name+".eye.anim")
-        names.append(eye_anim_name)
+        eye_anim_name = exporter.create_name(cam.name+".eye.anim")
         eye_anim_node = niff2_anim_node_builder(
             obj.location, [0.0, 0.0, 0.0], [0.0, 0.0, 0.0])
         eye_anim_group = niff2_anim_group_builder(
             len(anim_groups), eye_anim_name.index(), eye_anim_node)
         anim_groups.append(eye_anim_group)
 
-        lookat_anim_name = niff2_name_node_builder(
-            len(names), cam.name+".lookat.anim")
-        names.append(lookat_anim_name)
+        lookat_anim_name = exporter.create_name(cam.name+".lookat.anim")
         lookat_anim_node = niff2_anim_node_builder(
             obj.location-matrix[2].xyz, [0.0, 0.0, 0.0], [0.0, 0.0, 0.0])
         lookat_anim_group = niff2_anim_group_builder(
             len(anim_groups), lookat_anim_name.index(), lookat_anim_node)
         anim_groups.append(lookat_anim_group)
 
-        up_anim_name = niff2_name_node_builder(
-            len(names), cam.name+".up.anim")
-        names.append(up_anim_name)
+        up_anim_name = exporter.create_name(cam.name+".up.anim")
         up_anim_node = niff2_anim_node_builder(
             obj.location+matrix[1].xyz, [0.0, 0.0, 0.0], [0.0, 0.0, 0.0])
         up_anim_group = niff2_anim_group_builder(
             len(anim_groups), up_anim_name.index(), up_anim_node)
         anim_groups.append(up_anim_group)
 
-        eye_obj_name = niff2_name_node_builder(len(names), cam.name+".eye.obj")
-        names.append(eye_obj_name)
+        eye_obj_name = exporter.create_name(cam.name+".eye.obj")
         eye_obj = niff2_obj_node_builder(
             len(objs), eye_obj_name.index(), BAD_INDEX, BAD_INDEX, eye_anim_group.index())
         objs.append(eye_obj)
 
-        lookat_obj_name = niff2_name_node_builder(
-            len(names), cam.name+".lookat.obj")
-        names.append(lookat_obj_name)
+        lookat_obj_name = exporter.create_name(cam.name+".lookat.obj")
         lookat_obj = niff2_obj_node_builder(
             len(objs), lookat_obj_name.index(), BAD_INDEX, BAD_INDEX, lookat_anim_group.index())
         objs.append(lookat_obj)
 
-        up_obj_name = niff2_name_node_builder(len(names), cam.name+".up.obj")
-        names.append(up_obj_name)
+        up_obj_name = exporter.create_name(cam.name+".up.obj")
         up_obj = niff2_obj_node_builder(
             len(objs), up_obj_name.index(), BAD_INDEX, BAD_INDEX, up_anim_group.index())
         objs.append(up_obj)
 
-        cam_name = niff2_name_node_builder(len(names), cam.name+".cam")
-        names.append(cam_name)
+        cam_name = exporter.create_name(cam.name+".cam")
         cam_node = niff2_cam_node_builder(
             cam_index, cam_name.index(), eye_obj.index(), lookat_obj.index(), up_obj.index())
         cams.append(cam_node)
 
     # NIFF2 Env
     envs = []
-    env_name = niff2_name_node_builder(len(names), filename+".env")
-    names.append(env_name)
+    env_name = exporter.create_name(filename+".env")
     env_node = niff2_env_node_builder(
         0, env_name.index(), correct_gamma(data.worlds[0].color))
     envs.append(env_node)
@@ -355,8 +371,7 @@ def write_niff2(data, filepath):
         light = obj.data
         matrix = obj.matrix_world.transposed()
 
-        light_name = niff2_name_node_builder(len(names), light.name+".light")
-        names.append(light_name)
+        light_name = exporter.create_name(light.name+".light")
 
         light_node = niff2_light_node_builder(len(lights),
                                               light_name.index(),
@@ -382,13 +397,13 @@ def write_niff2(data, filepath):
         tri_nv_groups, vtx_nv_groups)
     st_list_header = niff2_st_list_header_builder(st_groups)
     part_list_header = niff2_part_list_header_builder(parts)
-    mat_list_header = niff2_mat_list_header_builder(materials)
+    mat_list_header = niff2_mat_list_header_builder(exporter.materials)
     tex_list_header = niff2_tex_list_header_builder()
     tex_img_list_header = niff2_tex_img_list_header_builder()
     anim_list_header = niff2_anim_list_header_builder(anim_groups)
     coll_list_header = niff2_coll_list_header_builder()
     switch_list_header = niff2_switch_list_header_builder()
-    name_list_header = niff2_name_list_header_builder(names)
+    name_list_header = niff2_name_list_header_builder(exporter.names)
     ci_img_list_header = niff2_ci_img_list_header_builder()
     color_palette_list_header = niff2_color_palette_list_header_builder()
     envelope_list_header = niff2_envelope_list_header_builder()
@@ -429,38 +444,38 @@ def write_niff2(data, filepath):
         + effector_list_header.num_bytes() \
         + external_name_list_header.num_bytes()
 
-    fh = niff2_file_header_builder(file_size)
-    fh.scene_list_num_byte = scene_header.num_bytes()
-    fh.env_list_num_byte = env_list_header.num_bytes()
-    fh.cam_list_num_byte = cam_list_header.num_bytes()
-    fh.light_list_num_byte = light_list_header.num_bytes()
-    fh.obj_list_num_byte = obj_list_header.num_bytes()
-    fh.shape_list_num_byte = shape_list_header.num_bytes()
-    fh.vtx_list_num_byte = vtx_list_header.num_bytes()
-    fh.tri_list_num_byte = tri_list_header.num_bytes()
-    fh.color_list_num_byte = color_list_header.num_bytes()
-    fh.vector_list_num_byte = vector_list_header.num_bytes()
-    fh.st_list_num_byte = st_list_header.num_bytes()
-    fh.part_list_num_byte = part_list_header.num_bytes()
-    fh.mat_list_num_byte = mat_list_header.num_bytes()
-    fh.tex_list_num_byte = tex_list_header.num_bytes()
-    fh.tex_img_list_num_byte = tex_img_list_header.num_bytes()
-    fh.anim_list_num_byte = anim_list_header.num_bytes()
-    fh.coll_list_num_byte = coll_list_header.num_bytes()
-    fh.switch_list_num_byte = switch_list_header.num_bytes()
-    fh.name_list_num_byte = name_list_header.num_bytes()
-    fh.ci_img_list_num_byte = ci_img_list_header.num_bytes()
-    fh.color_palette_list_num_byte = color_palette_list_header.num_bytes()
-    fh.envelope_list_num_byte = envelope_list_header.num_bytes()
-    fh.cluster_list_num_byte = cluster_list_header.num_bytes()
-    fh.weight_list_num_byte = weight_list_header.num_bytes()
-    fh.chain_root_list_num_byte = chain_root_list_header.num_bytes()
-    fh.joint_list_num_byte = joint_list_header.num_bytes()
-    fh.effector_list_num_byte = effector_list_header.num_bytes()
-    fh.external_name_list_num_byte = external_name_list_header.num_bytes()
+    file_header = niff2_file_header_builder(file_size)
+    file_header.scene_list_num_byte = scene_header.num_bytes()
+    file_header.env_list_num_byte = env_list_header.num_bytes()
+    file_header.cam_list_num_byte = cam_list_header.num_bytes()
+    file_header.light_list_num_byte = light_list_header.num_bytes()
+    file_header.obj_list_num_byte = obj_list_header.num_bytes()
+    file_header.shape_list_num_byte = shape_list_header.num_bytes()
+    file_header.vtx_list_num_byte = vtx_list_header.num_bytes()
+    file_header.tri_list_num_byte = tri_list_header.num_bytes()
+    file_header.color_list_num_byte = color_list_header.num_bytes()
+    file_header.vector_list_num_byte = vector_list_header.num_bytes()
+    file_header.st_list_num_byte = st_list_header.num_bytes()
+    file_header.part_list_num_byte = part_list_header.num_bytes()
+    file_header.mat_list_num_byte = mat_list_header.num_bytes()
+    file_header.tex_list_num_byte = tex_list_header.num_bytes()
+    file_header.tex_img_list_num_byte = tex_img_list_header.num_bytes()
+    file_header.anim_list_num_byte = anim_list_header.num_bytes()
+    file_header.coll_list_num_byte = coll_list_header.num_bytes()
+    file_header.switch_list_num_byte = switch_list_header.num_bytes()
+    file_header.name_list_num_byte = name_list_header.num_bytes()
+    file_header.ci_img_list_num_byte = ci_img_list_header.num_bytes()
+    file_header.color_palette_list_num_byte = color_palette_list_header.num_bytes()
+    file_header.envelope_list_num_byte = envelope_list_header.num_bytes()
+    file_header.cluster_list_num_byte = cluster_list_header.num_bytes()
+    file_header.weight_list_num_byte = weight_list_header.num_bytes()
+    file_header.chain_root_list_num_byte = chain_root_list_header.num_bytes()
+    file_header.joint_list_num_byte = joint_list_header.num_bytes()
+    file_header.effector_list_num_byte = effector_list_header.num_bytes()
+    file_header.external_name_list_num_byte = external_name_list_header.num_bytes()
 
     buf = bytearray()
-    niff2_file_header_writer(fh, buf)
+    niff2_file_header_writer(file_header, buf)
 
     niff2_scene_header_writer(scene_header, buf)
 
@@ -514,8 +529,8 @@ def write_niff2(data, filepath):
     for part in parts:
         niff2_part_node_writer(part, buf)
 
-    niff2_mat_list_header_writer(mat_list_header, materials, buf)
-    for mat in materials:
+    niff2_mat_list_header_writer(mat_list_header, exporter.materials, buf)
+    for mat in exporter.materials:
         niff2_mat_node_writer(mat, buf)
 
     niff2_tex_list_header_writer(tex_list_header, buf)
@@ -528,8 +543,8 @@ def write_niff2(data, filepath):
     niff2_coll_list_header_writer(coll_list_header, buf)
     niff2_switch_list_header_writer(switch_list_header, buf)
 
-    niff2_name_list_header_writer(name_list_header, names, buf)
-    for name in names:
+    niff2_name_list_header_writer(name_list_header, exporter.names, buf)
+    for name in exporter.names:
         niff2_name_node_writer(name, buf)
 
     niff2_ci_img_list_header_writer(ci_img_list_header, buf)
@@ -542,8 +557,8 @@ def write_niff2(data, filepath):
     niff2_effector_list_header_writer(effector_list_header, buf)
     niff2_external_name_list_header_writer(external_name_list_header, buf)
 
-    f = open(filepath, 'wb')
-    f.write(buf)
-    f.close()
+    file = open(filepath, 'wb')
+    file.write(buf)
+    file.close()
 
     return {'FINISHED'}
