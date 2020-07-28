@@ -1,21 +1,19 @@
 """Tests about creating .nif file from Blender data."""
 
 import unittest
-from bpy.types import (Material, Mesh, Object)
+from bpy.types import (Material, Mesh, MeshVertex, Object)
 from blend2niff.exporter import Exporter
 
 
 class TestExporter(unittest.TestCase):
     def test_create_name(self):
         exporter = Exporter()
-
         hello = exporter.create_name("hello")
         world = exporter.create_name("world")
+
         self.assertEqual(exporter.names, [hello, world])
 
     def test_create_materials(self):
-        exporter = Exporter()
-
         not_a_mesh = Object()
         mesh_with_0_mat = Object()
         mesh_with_1_mat = Object()
@@ -33,6 +31,7 @@ class TestExporter(unittest.TestCase):
         mesh_with_1_mat.data.materials = [material]*1
         mesh_with_2_mat.data.materials = [material]*2
 
+        exporter = Exporter()
         exporter.create_materials([not_a_mesh,
                                    mesh_with_0_mat,
                                    mesh_with_1_mat,
@@ -55,9 +54,27 @@ class TestExporter(unittest.TestCase):
 
     def test_get_default_material(self):
         exporter = Exporter()
-
         exporter.create_materials([])
+
         self.assertEqual(
             exporter.materials[0], exporter.get_default_material())
         self.assertEqual(
             exporter.materials[0].this_mat_index, 0)
+
+    def test_create_vertex_groups(self):
+        not_a_mesh = Object()
+        mesh = Object()
+
+        mesh.data = Mesh()
+        mesh.data.name = "mesh"
+
+        vertex = MeshVertex()
+        vertex.co = [0.0, 0.0, 0.0]
+
+        mesh.data.vertices = [vertex]*10
+
+        exporter = Exporter()
+        exporter.create_vertex_groups([not_a_mesh, mesh])
+
+        self.assertEqual(len(exporter.names), 1)
+        self.assertEqual(len(exporter.vtx_groups), 1)
