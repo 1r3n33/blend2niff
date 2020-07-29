@@ -87,12 +87,15 @@ class TestExporter(unittest.TestCase):
 
     def test_create_color_groups(self):
         not_a_mesh = Object()
-        mesh = Object()
+        mesh_with_vtx_colors = Object()
+        mesh_without_vtx_colors = Object()
 
-        mesh.data = Mesh()
+        mesh_with_vtx_colors.data = Mesh()
+        mesh_without_vtx_colors.data = Mesh()
 
         vertex = MeshVertex()
-        mesh.data.vertices = [vertex]*3
+        mesh_with_vtx_colors.data.vertices = [vertex]*3
+        mesh_without_vtx_colors.data.vertices = [vertex]*3
 
         red = MeshLoopColor()
         red.color = [1.0, 0.0, 0.0, 1.0]
@@ -103,19 +106,25 @@ class TestExporter(unittest.TestCase):
 
         vertex_colors = MeshLoopColorLayer()
         vertex_colors.data = [red, green, blue]
-        mesh.data.vertex_colors = [vertex_colors]
+        mesh_with_vtx_colors.data.vertex_colors = [vertex_colors]
+        mesh_without_vtx_colors.data.vertex_colors = []
 
         tri = MeshLoopTriangle()
         tri.vertices = [0, 1, 2]
         tri.loops = [0, 1, 2]
-        mesh.data.loop_triangles = [tri]
+        mesh_with_vtx_colors.data.loop_triangles = [tri]
+        mesh_without_vtx_colors.data.loop_triangles = [tri]
 
         exporter = Exporter()
-        exporter.create_color_groups([not_a_mesh, mesh])
+        exporter.create_color_groups([not_a_mesh,
+                                      mesh_with_vtx_colors,
+                                      mesh_without_vtx_colors])
 
         self.assertEqual(len(exporter.tri_color_groups),
                          len(exporter.vtx_color_groups))
         self.assertEqual(exporter.tri_color_groups[0].tri_color_num, 1)
         self.assertEqual(exporter.tri_color_groups[1].tri_color_num, 1)
+        self.assertEqual(exporter.tri_color_groups[2].tri_color_num, 1)
         self.assertEqual(exporter.vtx_color_groups[0].vtx_color_num, 1)
         self.assertEqual(exporter.vtx_color_groups[1].vtx_color_num, 3)
+        self.assertEqual(exporter.vtx_color_groups[2].vtx_color_num, 1)

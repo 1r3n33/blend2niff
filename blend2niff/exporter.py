@@ -163,27 +163,37 @@ class Exporter:
         for obj in objs:
             if isinstance(obj.data, Mesh):
                 mesh = obj.data
-                mesh.calc_loop_triangles()
-                vtx_colors = [float]*len(mesh.vertices)*4
 
-                for tri in mesh.loop_triangles:
-                    for i in range(3):
-                        vtx_index = tri.vertices[i]
-                        loop_index = tri.loops[i]
-                        color = correct_gamma(
-                            mesh.vertex_colors[0].data[loop_index].color)
-                        vtx_colors[(vtx_index*4)+0] = color[0]
-                        vtx_colors[(vtx_index*4)+1] = color[1]
-                        vtx_colors[(vtx_index*4)+2] = color[2]
-                        vtx_colors[(vtx_index*4)+3] = color[3]
+                # Add vertex colors if exists
+                if len(mesh.vertex_colors) > 0:
+                    mesh.calc_loop_triangles()
+                    vtx_colors = [float]*len(mesh.vertices)*4
 
+                    for tri in mesh.loop_triangles:
+                        for i in range(3):
+                            vtx_index = tri.vertices[i]
+                            loop_index = tri.loops[i]
+                            color = correct_gamma(
+                                mesh.vertex_colors[0].data[loop_index].color)
+                            vtx_colors[(vtx_index*4)+0] = color[0]
+                            vtx_colors[(vtx_index*4)+1] = color[1]
+                            vtx_colors[(vtx_index*4)+2] = color[2]
+                            vtx_colors[(vtx_index*4)+3] = color[3]
+
+                    vtx_color_group = niff2_vtx_color_group_node_builder(
+                        len(self.vtx_color_groups), vtx_colors)
+                    self.vtx_color_groups.append(vtx_color_group)
+
+                # Add default color if vertex colors do not exist
+                else:
+                    vtx_color_group = niff2_vtx_color_group_node_builder(
+                        len(self.vtx_color_groups), default_color)
+                    self.vtx_color_groups.append(vtx_color_group)
+
+                # Add default color for triangles
                 tri_color_group = niff2_tri_color_group_node_builder(
                     len(self.tri_color_groups), default_color)
                 self.tri_color_groups.append(tri_color_group)
-
-                vtx_color_group = niff2_vtx_color_group_node_builder(
-                    len(self.vtx_color_groups), vtx_colors)
-                self.vtx_color_groups.append(vtx_color_group)
 
 
 #
