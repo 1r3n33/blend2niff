@@ -161,3 +161,8 @@ class TestExporter(unittest.TestCase):
         self.assertEqual(exporter.tri_nv_groups[1].tri_nv_num, 1)
         self.assertEqual(exporter.vtx_nv_groups[0].vtx_nv_num, 1)
         self.assertEqual(exporter.vtx_nv_groups[1].vtx_nv_num, 3)
+
+    def test_create_st_groups(self):
+        exporter = Exporter()
+        exporter.create_st_groups()
+        self.assertEqual(exporter.st_groups[0].st_num, 1)

@@ -51,9 +51,9 @@ def niff2_st_list_header_writer(st_list_header, st_groups, buf):
 
 
 #
-# StGroup Node
+# St Group
 #
-class Niff2StGroupNode:
+class Niff2StGroup:
     def __init__(self, index, st_floats):
         self.st_group_tag = TAG_ST_GROUP
         self.this_st_group_index = index
@@ -63,18 +63,18 @@ class Niff2StGroupNode:
         self.st_floats = st_floats
 
 
-def niff2_st_group_node_builder(index, st_floats):
-    return Niff2StGroupNode(index, st_floats)
+def niff2_st_group_builder(index, st_floats):
+    return Niff2StGroup(index, st_floats)
 
 
-def niff2_st_group_node_writer(st_group_node, buf):
-    buf += st_group_node.st_group_tag.to_bytes(4, BYTE_ORDER)
-    buf += st_group_node.this_st_group_index.to_bytes(4, BYTE_ORDER)
-    buf += st_group_node.st_group_header_size.to_bytes(4, BYTE_ORDER)
-    buf += st_group_node.st_group_size.to_bytes(4, BYTE_ORDER)
-    buf += st_group_node.st_num.to_bytes(4, BYTE_ORDER)
+def niff2_st_group_writer(st_group, buf):
+    buf += st_group.st_group_tag.to_bytes(4, BYTE_ORDER)
+    buf += st_group.this_st_group_index.to_bytes(4, BYTE_ORDER)
+    buf += st_group.st_group_header_size.to_bytes(4, BYTE_ORDER)
+    buf += st_group.st_group_size.to_bytes(4, BYTE_ORDER)
+    buf += st_group.st_num.to_bytes(4, BYTE_ORDER)
 
-    for value in st_group_node.st_floats:
+    for value in st_group.st_floats:
         buf += bytearray(struct.pack(">f", value))
 
     return buf

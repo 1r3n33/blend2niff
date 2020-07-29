@@ -42,7 +42,7 @@ from blend2niff.niff2.niff2_shape import (
     niff2_shape_node_builder, niff2_shape_node_writer)
 from blend2niff.niff2.niff2_st import (
     niff2_st_list_header_builder, niff2_st_list_header_writer,
-    niff2_st_group_node_builder, niff2_st_group_node_writer)
+    niff2_st_group_builder, niff2_st_group_writer)
 from blend2niff.niff2.niff2_tri import (
     niff2_tri_list_header_builder, niff2_tri_list_header_writer,
     niff2_tri_group_builder, niff2_tri_group_writer)
@@ -83,6 +83,7 @@ class Exporter:
         self.vtx_color_groups = []  # All vertex color groups
         self.tri_nv_groups = []  # All triangle normal groups
         self.vtx_nv_groups = []  # All vertex normal groups
+        self.st_groups = []  # All vertex texture coord groups
 
     def create_name(self, name):
         """
@@ -236,6 +237,14 @@ class Exporter:
                 len(self.vtx_nv_groups), vtx_normals)
             self.vtx_nv_groups.append(vtx_nv_group)
 
+    def create_st_groups(self):
+        """
+        Create default vertex texture coord group.
+        """
+        default_st = [0.5, 0.5]  # center
+        default_st_group = niff2_st_group_builder(0, default_st)
+        self.st_groups.append(default_st_group)
+
 
 #
 # Writer entry point
@@ -260,11 +269,7 @@ def write_niff2(data, filepath):
 
     exporter.create_vector_groups(mesh_objs)
 
-    # Niff2 StGroup: Create a single default texture coordinates
-    st_groups = []
-    default_st = [0.5, 0.5]  # center
-    default_st_group = niff2_st_group_node_builder(0, default_st)
-    st_groups.append(default_st_group)
+    exporter.create_st_groups()
 
     # NIFF2 TriGroup <-> Blender Mesh (1 tri_group per mesh)
     tri_groups = []
@@ -432,7 +437,7 @@ def write_niff2(data, filepath):
         exporter.tri_color_groups, exporter.vtx_color_groups)
     vector_list_header = niff2_vector_list_header_builder(
         exporter.tri_nv_groups, exporter.vtx_nv_groups)
-    st_list_header = niff2_st_list_header_builder(st_groups)
+    st_list_header = niff2_st_list_header_builder(exporter.st_groups)
     part_list_header = niff2_part_list_header_builder(parts)
     mat_list_header = niff2_mat_list_header_builder(exporter.materials)
     tex_list_header = niff2_tex_list_header_builder()
@@ -558,9 +563,9 @@ def write_niff2(data, filepath):
     for vtx_nv_group in exporter.vtx_nv_groups:
         niff2_vtx_nv_group_writer(vtx_nv_group, buf)
 
-    niff2_st_list_header_writer(st_list_header, st_groups, buf)
-    for st_group in st_groups:
-        niff2_st_group_node_writer(st_group, buf)
+    niff2_st_list_header_writer(st_list_header, exporter.st_groups, buf)
+    for st_group in exporter.st_groups:
+        niff2_st_group_writer(st_group, buf)
 
     niff2_part_list_header_writer(part_list_header, parts, buf)
     for part in parts:
