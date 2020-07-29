@@ -81,6 +81,8 @@ class Exporter:
         self.vtx_groups = []  # All vertex groups
         self.tri_color_groups = []  # All triangle color groups
         self.vtx_color_groups = []  # All vertex color groups
+        self.tri_nv_groups = []  # All triangle normal groups
+        self.vtx_nv_groups = []  # All vertex normal groups
 
     def create_name(self, name):
         """
@@ -146,7 +148,7 @@ class Exporter:
     def create_color_groups(self, objs):
         """
         Create and register all vertex color groups and all triangle color groups.
-        Also create default grey-ish colors.
+        Also create default grey-ish color.
         Make sure to have the same number of tri_color_groups & vtx_color_groups.
         This prevents nifftools/checknb2.exe from crashing.
         Do not support smooth groups: 1 color per vertex!
@@ -195,6 +197,45 @@ class Exporter:
                     len(self.tri_color_groups), default_color)
                 self.tri_color_groups.append(tri_color_group)
 
+    def create_vector_groups(self, objs):
+        """
+        Create and register all vertex normal groups and triangle normal groups.
+        Also create default up normal.
+        Make sure to have the same number of tri_vector_groups & vtx_vector_groups.
+        This prevents nifftools/checknb2.exe from crashing.
+        Do not support smooth groups: 1 normal per vertex!
+        Indices are all aligned on both vertex coords and vertex normals.
+        """
+        default_nv = [0.0, 1.0, 0.0]  # up
+        default_tri_nv_group = niff2_tri_nv_group_builder(0, default_nv)
+        default_vtx_nv_group = niff2_vtx_nv_group_builder(0, default_nv)
+        self.tri_nv_groups.append(default_tri_nv_group)
+        self.vtx_nv_groups.append(default_vtx_nv_group)
+
+        meshes = [obj.data for obj in objs if isinstance(obj.data, Mesh)]
+
+        for mesh in meshes:
+            mesh.calc_loop_triangles()
+            mesh.calc_normals_split()
+            vtx_normals = [float]*len(mesh.vertices)*3
+
+            for tri in mesh.loop_triangles:
+                for i in range(3):
+                    vtx_index = tri.vertices[i]
+                    loop_index = tri.loops[i]
+                    normal = mesh.loops[loop_index].normal
+                    vtx_normals[(vtx_index*3)+0] = normal[0]
+                    vtx_normals[(vtx_index*3)+1] = normal[1]
+                    vtx_normals[(vtx_index*3)+2] = normal[2]
+
+            tri_nv_group = niff2_tri_nv_group_builder(
+                len(self.tri_nv_groups), default_nv)
+            self.tri_nv_groups.append(tri_nv_group)
+
+            vtx_nv_group = niff2_vtx_nv_group_builder(
+                len(self.vtx_nv_groups), vtx_normals)
+            self.vtx_nv_groups.append(vtx_nv_group)
+
 
 #
 # Writer entry point
@@ -217,41 +258,7 @@ def write_niff2(data, filepath):
 
     exporter.create_color_groups(mesh_objs)
 
-    # Niff2 VectorGroup: Create a single default normal vector
-    tri_nv_groups = []
-    vtx_nv_groups = []
-    default_nv = [0.0, 1.0, 0.0]  # up
-    default_tri_nv_group = niff2_tri_nv_group_builder(0, default_nv)
-    default_vtx_nv_group = niff2_vtx_nv_group_builder(0, default_nv)
-    tri_nv_groups.append(default_tri_nv_group)
-    vtx_nv_groups.append(default_vtx_nv_group)
-
-    # Niff2 VectorGroup: Create mesh vertex normals group.
-    # (!) Make sure to have the same number of tri_nv_groups & vtx_nv_groups.
-    #     This prevents nifftools/checknb2.exe from crashing.
-    # (!) Do not support smooth groups: 1 normal per vertex!
-    #     Indices are all aligned on both vertex coords and vertex normals.
-    for mesh in data.meshes:
-        mesh.calc_loop_triangles()
-        mesh.calc_normals_split()
-        vtx_normals = [float]*len(mesh.vertices)*3
-
-        for tri in mesh.loop_triangles:
-            for i in range(3):
-                vtx_index = tri.vertices[i]
-                loop_index = tri.loops[i]
-                normal = mesh.loops[loop_index].normal
-                vtx_normals[(vtx_index*3)+0] = normal[0]
-                vtx_normals[(vtx_index*3)+1] = normal[1]
-                vtx_normals[(vtx_index*3)+2] = normal[2]
-
-        tri_nv_group = niff2_tri_nv_group_builder(
-            len(tri_nv_groups), default_nv)
-        tri_nv_groups.append(tri_nv_group)
-
-        vtx_nv_group = niff2_vtx_nv_group_builder(
-            len(vtx_nv_groups), vtx_normals)
-        vtx_nv_groups.append(vtx_nv_group)
+    exporter.create_vector_groups(mesh_objs)
 
     # Niff2 StGroup: Create a single default texture coordinates
     st_groups = []
@@ -424,7 +431,7 @@ def write_niff2(data, filepath):
     color_list_header = niff2_color_list_header_builder(
         exporter.tri_color_groups, exporter.vtx_color_groups)
     vector_list_header = niff2_vector_list_header_builder(
-        tri_nv_groups, vtx_nv_groups)
+        exporter.tri_nv_groups, exporter.vtx_nv_groups)
     st_list_header = niff2_st_list_header_builder(st_groups)
     part_list_header = niff2_part_list_header_builder(parts)
     mat_list_header = niff2_mat_list_header_builder(exporter.materials)
@@ -545,10 +552,10 @@ def write_niff2(data, filepath):
         niff2_vtx_color_group_node_writer(vtx_color_group, buf)
 
     niff2_vector_list_header_writer(
-        vector_list_header, tri_nv_groups, vtx_nv_groups, buf)
-    for tri_nv_group in tri_nv_groups:
+        vector_list_header, exporter.tri_nv_groups, exporter.vtx_nv_groups, buf)
+    for tri_nv_group in exporter.tri_nv_groups:
         niff2_tri_nv_group_writer(tri_nv_group, buf)
-    for vtx_nv_group in vtx_nv_groups:
+    for vtx_nv_group in exporter.vtx_nv_groups:
         niff2_vtx_nv_group_writer(vtx_nv_group, buf)
 
     niff2_st_list_header_writer(st_list_header, st_groups, buf)

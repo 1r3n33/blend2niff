@@ -3,6 +3,7 @@
 import unittest
 from bpy.types import (Material,
                        Mesh,
+                       MeshLoop,
                        MeshLoopColor,
                        MeshLoopColorLayer,
                        MeshLoopTriangle,
@@ -128,3 +129,35 @@ class TestExporter(unittest.TestCase):
         self.assertEqual(exporter.vtx_color_groups[0].vtx_color_num, 1)
         self.assertEqual(exporter.vtx_color_groups[1].vtx_color_num, 3)
         self.assertEqual(exporter.vtx_color_groups[2].vtx_color_num, 1)
+
+    def test_create_vector_groups(self):
+        not_a_mesh = Object()
+        mesh = Object()
+
+        mesh.data = Mesh()
+
+        vertex = MeshVertex()
+        mesh.data.vertices = [vertex]*3
+
+        n_x = MeshLoop()
+        n_x.normal = [1.0, 0.0, 0.0]
+        n_y = MeshLoop()
+        n_y.normal = [0.0, 1.0, 0.0]
+        n_z = MeshLoop()
+        n_z.normal = [0.0, 0.0, 1.0]
+        mesh.data.loops = [n_x, n_y, n_z]
+
+        tri = MeshLoopTriangle()
+        tri.vertices = [0, 1, 2]
+        tri.loops = [0, 1, 2]
+        mesh.data.loop_triangles = [tri]
+
+        exporter = Exporter()
+        exporter.create_vector_groups([not_a_mesh, mesh])
+
+        self.assertEqual(len(exporter.tri_nv_groups),
+                         len(exporter.vtx_nv_groups))
+        self.assertEqual(exporter.tri_nv_groups[0].tri_nv_num, 1)
+        self.assertEqual(exporter.tri_nv_groups[1].tri_nv_num, 1)
+        self.assertEqual(exporter.vtx_nv_groups[0].vtx_nv_num, 1)
+        self.assertEqual(exporter.vtx_nv_groups[1].vtx_nv_num, 3)
