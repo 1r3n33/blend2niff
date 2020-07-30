@@ -19,6 +19,7 @@ pylint:
     - W5103
 
   options:
+    max-args: 8
     max-locals: 15
     max-returns: 6
     max-branches: 15
