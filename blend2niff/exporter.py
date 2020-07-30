@@ -75,15 +75,18 @@ BAD_INDEX = 0xFFFFFFFF
 
 class Exporter:
     def __init__(self):
-        self.names = []  # All names.
-        self.materials = []  # All materials, 0 is default material.
-        self.materials_by_mesh = {}  # All NIFF2 materials by Blender mesh.
+        self.names = []  # All names
+        self.materials = []  # All materials, 0 is default material
+        self.materials_by_mesh = {}  # NIFF2 materials by Blender mesh
         self.vtx_groups = []  # All vertex groups
+        self.vtx_group_by_mesh = {}  # NIFF2 vertex group by Blender mesh
         self.tri_color_groups = []  # All triangle color groups
         self.vtx_color_groups = []  # All vertex color groups
         self.tri_nv_groups = []  # All triangle normal groups
         self.vtx_nv_groups = []  # All vertex normal groups
         self.st_groups = []  # All vertex texture coord groups
+        self.tri_groups = []  # All triangle groups
+        self.tri_group_by_mesh = {}  # NIFF2 triangle group by Blender mesh
 
     def create_name(self, name):
         """
@@ -145,6 +148,7 @@ class Exporter:
                                                          vtx_group_name.index(),
                                                          vtx_floats)
                 self.vtx_groups.append(vtx_group)
+                self.vtx_group_by_mesh[mesh] = vtx_group
 
     def create_color_groups(self, objs):
         """
@@ -239,11 +243,31 @@ class Exporter:
 
     def create_st_groups(self):
         """
-        Create default vertex texture coord group.
+        Create and register default vertex texture coord group.
         """
         default_st = [0.5, 0.5]  # center
         default_st_group = niff2_st_group_builder(0, default_st)
         self.st_groups.append(default_st_group)
+
+    def create_tri_groups(self, objs):
+        """
+        Create and register all triangle groups.
+        """
+        meshes = [obj.data for obj in objs if isinstance(obj.data, Mesh)]
+
+        for mesh in meshes:
+            mesh.calc_loop_triangles()
+
+            tri_group_name = self.create_name(mesh.name+".tri")
+            vtx_group = self.vtx_group_by_mesh[mesh]
+            vtx_indices = [
+                index for tri in mesh.loop_triangles for index in tri.vertices]
+
+            tri_group = niff2_tri_group_builder(
+                len(self.tri_groups), tri_group_name.index(), vtx_group.index(), vtx_indices)
+
+            self.tri_groups.append(tri_group)
+            self.tri_group_by_mesh[mesh] = tri_group
 
 
 #
@@ -271,21 +295,7 @@ def write_niff2(data, filepath):
 
     exporter.create_st_groups()
 
-    # NIFF2 TriGroup <-> Blender Mesh (1 tri_group per mesh)
-    tri_groups = []
-    tri_group_by_mesh = {}
-    for tri_group_index, mesh, vtx_group in zip(range(len(data.meshes)),
-                                                data.meshes,
-                                                exporter.vtx_groups):
-        tri_group_name = exporter.create_name(mesh.name+".tri")
-        vtx_indices = []
-        mesh.calc_loop_triangles()
-        for tri in mesh.loop_triangles:
-            vtx_indices += list(tri.vertices)
-        tri_group = niff2_tri_group_builder(
-            tri_group_index, tri_group_name.index(), vtx_group.index(), vtx_indices)
-        tri_groups.append(tri_group)
-        tri_group_by_mesh[mesh] = tri_group
+    exporter.create_tri_groups(mesh_objs)
 
     # NIFF2 Parts: Create meshes parts
     parts = []
@@ -305,7 +315,7 @@ def write_niff2(data, filepath):
             part_name = exporter.create_name(
                 mesh.name+".part."+str(mat_index).zfill(2))
 
-            tri_group_index = tri_group_by_mesh[mesh].index()
+            tri_group_index = exporter.tri_group_by_mesh[mesh].index()
             mat_index = exporter.materials_by_mesh[mesh][mat_index].index()
             part_node = niff2_part_node_builder(
                 len(parts), part_name.index(), tri_group_index, mat_index, tri_indices)
@@ -314,7 +324,7 @@ def write_niff2(data, filepath):
 
     # NIFF2 Shape <-> Blender Mesh
     shapes = []
-    for shape_index, mesh, tri_group in zip(range(len(data.meshes)), data.meshes, tri_groups):
+    for shape_index, mesh, tri_group in zip(range(len(data.meshes)), data.meshes, exporter.tri_groups):
         shape_name = exporter.create_name(mesh.name+".shape")
         shape = niff2_shape_node_builder(shape_index,
                                          shape_name.index(),
@@ -432,7 +442,7 @@ def write_niff2(data, filepath):
     obj_list_header = niff2_obj_list_header_builder(objs)
     shape_list_header = niff2_shape_list_header_builder(shapes)
     vtx_list_header = niff2_vtx_list_header_builder(exporter.vtx_groups)
-    tri_list_header = niff2_tri_list_header_builder(tri_groups)
+    tri_list_header = niff2_tri_list_header_builder(exporter.tri_groups)
     color_list_header = niff2_color_list_header_builder(
         exporter.tri_color_groups, exporter.vtx_color_groups)
     vector_list_header = niff2_vector_list_header_builder(
@@ -545,8 +555,8 @@ def write_niff2(data, filepath):
     for vtx_group in exporter.vtx_groups:
         niff2_vtx_group_node_writer(vtx_group, buf)
 
-    niff2_tri_list_header_writer(tri_list_header, tri_groups, buf)
-    for tri_group in tri_groups:
+    niff2_tri_list_header_writer(tri_list_header, exporter.tri_groups, buf)
+    for tri_group in exporter.tri_groups:
         niff2_tri_group_writer(tri_group, buf)
 
     niff2_color_list_header_writer(

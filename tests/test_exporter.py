@@ -85,6 +85,10 @@ class TestExporter(unittest.TestCase):
 
         self.assertEqual(len(exporter.names), 1)
         self.assertEqual(len(exporter.vtx_groups), 1)
+        self.assertEqual(
+            not_a_mesh.data in exporter.vtx_group_by_mesh, False)
+        self.assertEqual(
+            exporter.vtx_group_by_mesh[mesh.data], exporter.vtx_groups[0])
 
     def test_create_color_groups(self):
         not_a_mesh = Object()
@@ -166,3 +170,29 @@ class TestExporter(unittest.TestCase):
         exporter = Exporter()
         exporter.create_st_groups()
         self.assertEqual(exporter.st_groups[0].st_num, 1)
+
+    def test_create_tri_groups(self):
+        not_a_mesh = Object()
+        mesh = Object()
+
+        mesh.data = Mesh()
+        mesh.data.name = "mesh"
+
+        vertex = MeshVertex()
+        vertex.co = [0.0, 0.0, 0.0]
+
+        mesh.data.vertices = [vertex]*3
+
+        tri = MeshLoopTriangle()
+        tri.vertices = [0, 1, 2]
+        mesh.data.loop_triangles = [tri]
+
+        exporter = Exporter()
+        exporter.create_vertex_groups([not_a_mesh, mesh])
+        exporter.create_tri_groups([not_a_mesh, mesh])
+
+        self.assertEqual(len(exporter.tri_groups), 1)
+        self.assertEqual(
+            not_a_mesh.data in exporter.tri_group_by_mesh, False)
+        self.assertEqual(
+            exporter.tri_group_by_mesh[mesh.data], exporter.tri_groups[0])
