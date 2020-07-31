@@ -196,3 +196,63 @@ class TestExporter(unittest.TestCase):
             not_a_mesh.data in exporter.tri_group_by_mesh, False)
         self.assertEqual(
             exporter.tri_group_by_mesh[mesh.data], exporter.tri_groups[0])
+
+    def test_create_parts(self):
+        obj = Object()
+
+        mesh = Mesh()
+        mesh.name = "mesh"
+        obj.data = mesh
+
+        mat_red = Material()
+        mat_red.name = "red"
+        mat_red.diffuse_color = [1.0, 0.0, 0.0, 1.0]
+
+        mat_green = Material()
+        mat_green.name = "green"
+        mat_green.diffuse_color = [0.0, 1.0, 0.0, 1.0]
+
+        mat_blue = Material()
+        mat_blue.name = "blue"
+        mat_blue.diffuse_color = [0.0, 0.0, 1.0, 1.0]
+
+        mesh.materials = [mat_red, mat_green, mat_blue]
+
+        vertex = MeshVertex()
+        vertex.co = [0.0, 0.0, 0.0]
+
+        mesh.vertices = [vertex]*9
+
+        tri_red = MeshLoopTriangle()
+        tri_red.vertices = [0, 1, 2]
+        tri_red.material_index = 0
+
+        tri_green = MeshLoopTriangle()
+        tri_green.vertices = [3, 4, 5]
+        tri_green.material_index = 1
+
+        tri_blue = MeshLoopTriangle()
+        tri_blue.vertices = [6, 7, 8]
+        tri_blue.material_index = 2
+
+        mesh.loop_triangles = [tri_red, tri_green, tri_blue]
+
+        exporter = Exporter()
+        exporter.create_materials([obj])
+        exporter.create_vertex_groups([obj])
+        exporter.create_tri_groups([obj])
+        exporter.create_parts([obj])
+
+        self.assertEqual(
+            exporter.parts[0].mat_index, exporter.materials[1].this_mat_index)
+        self.assertEqual(
+            exporter.parts[1].mat_index, exporter.materials[2].this_mat_index)
+        self.assertEqual(
+            exporter.parts[2].mat_index, exporter.materials[3].this_mat_index)
+        self.assertEqual(
+            exporter.parts[0].tri_indices, [exporter.tri_groups[0].tris[0].this_tri_index])
+        self.assertEqual(
+            exporter.parts[1].tri_indices, [exporter.tri_groups[0].tris[1].this_tri_index])
+        self.assertEqual(
+            exporter.parts[2].tri_indices, [exporter.tri_groups[0].tris[2].this_tri_index])
+        self.assertEqual(exporter.parts_by_mesh[mesh], exporter.parts)

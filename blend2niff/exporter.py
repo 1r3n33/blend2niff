@@ -87,6 +87,8 @@ class Exporter:
         self.st_groups = []  # All vertex texture coord groups
         self.tri_groups = []  # All triangle groups
         self.tri_group_by_mesh = {}  # NIFF2 triangle group by Blender mesh
+        self.parts = []  # All shape parts
+        self.parts_by_mesh = {}  # NIFF2 parts by Blender mesh
 
     def create_name(self, name):
         """
@@ -269,6 +271,35 @@ class Exporter:
             self.tri_groups.append(tri_group)
             self.tri_group_by_mesh[mesh] = tri_group
 
+    def create_parts(self, objs):
+        """
+        Create and register shape parts
+        """
+        meshes = [obj.data for obj in objs if isinstance(obj.data, Mesh)]
+
+        for mesh in meshes:
+            mesh.calc_loop_triangles()
+
+            self.parts_by_mesh[mesh] = []
+
+            for mat_index in range(len(mesh.materials)):
+                tri_indices = []
+
+                for tri_index, tri in zip(range(len(mesh.loop_triangles)), mesh.loop_triangles):
+                    if tri.material_index == mat_index:
+                        tri_indices.append(tri_index)
+
+                tri_group_index = self.tri_group_by_mesh[mesh].index()
+                part_name = self.create_name(
+                    mesh.name+".part."+str(mat_index).zfill(2))
+                mat_index = self.materials_by_mesh[mesh][mat_index].index()
+
+                part_node = niff2_part_node_builder(
+                    len(self.parts), part_name.index(), tri_group_index, mat_index, tri_indices)
+
+                self.parts.append(part_node)
+                self.parts_by_mesh[mesh].append(part_node)
+
 
 #
 # Writer entry point
@@ -297,30 +328,7 @@ def write_niff2(data, filepath):
 
     exporter.create_tri_groups(mesh_objs)
 
-    # NIFF2 Parts: Create meshes parts
-    parts = []
-    parts_by_mesh = {}
-    for obj in mesh_objs:
-        mesh = obj.data
-        parts_by_mesh[mesh] = []
-        mesh.calc_loop_triangles()
-
-        for mat_index in range(len(mesh.materials)):
-            tri_indices = []
-
-            for tri_index, tri in zip(range(len(mesh.loop_triangles)), mesh.loop_triangles):
-                if tri.material_index == mat_index:
-                    tri_indices.append(tri_index)
-
-            part_name = exporter.create_name(
-                mesh.name+".part."+str(mat_index).zfill(2))
-
-            tri_group_index = exporter.tri_group_by_mesh[mesh].index()
-            mat_index = exporter.materials_by_mesh[mesh][mat_index].index()
-            part_node = niff2_part_node_builder(
-                len(parts), part_name.index(), tri_group_index, mat_index, tri_indices)
-            parts.append(part_node)
-            parts_by_mesh[mesh].append(part_node)
+    exporter.create_parts(mesh_objs)
 
     # NIFF2 Shape <-> Blender Mesh
     shapes = []
@@ -330,7 +338,7 @@ def write_niff2(data, filepath):
                                          shape_name.index(),
                                          tri_group.index(),
                                          default_material.index(),
-                                         parts_by_mesh[mesh])
+                                         exporter.parts_by_mesh[mesh])
         shapes.append(shape)
 
     # NIFF2 Anim: 1 anim per object
@@ -448,7 +456,7 @@ def write_niff2(data, filepath):
     vector_list_header = niff2_vector_list_header_builder(
         exporter.tri_nv_groups, exporter.vtx_nv_groups)
     st_list_header = niff2_st_list_header_builder(exporter.st_groups)
-    part_list_header = niff2_part_list_header_builder(parts)
+    part_list_header = niff2_part_list_header_builder(exporter.parts)
     mat_list_header = niff2_mat_list_header_builder(exporter.materials)
     tex_list_header = niff2_tex_list_header_builder()
     tex_img_list_header = niff2_tex_img_list_header_builder()
@@ -577,8 +585,8 @@ def write_niff2(data, filepath):
     for st_group in exporter.st_groups:
         niff2_st_group_writer(st_group, buf)
 
-    niff2_part_list_header_writer(part_list_header, parts, buf)
-    for part in parts:
+    niff2_part_list_header_writer(part_list_header, exporter.parts, buf)
+    for part in exporter.parts:
         niff2_part_node_writer(part, buf)
 
     niff2_mat_list_header_writer(mat_list_header, exporter.materials, buf)
