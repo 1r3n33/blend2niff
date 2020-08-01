@@ -256,3 +256,42 @@ class TestExporter(unittest.TestCase):
         self.assertEqual(
             exporter.parts[2].tri_indices, [exporter.tri_groups[0].tris[2].this_tri_index])
         self.assertEqual(exporter.parts_by_mesh[mesh], exporter.parts)
+
+    def test_create_shapes(self):
+        obj = Object()
+
+        mesh = Mesh()
+        mesh.name = "mesh"
+        obj.data = mesh
+
+        mat_red = Material()
+        mat_red.name = "red"
+        mat_red.diffuse_color = [1.0, 0.0, 0.0, 1.0]
+
+        mesh.materials = [mat_red]
+
+        vertex = MeshVertex()
+        vertex.co = [0.0, 0.0, 0.0]
+
+        mesh.vertices = [vertex]*3
+
+        tri_red = MeshLoopTriangle()
+        tri_red.vertices = [0, 1, 2]
+        tri_red.material_index = 0
+
+        mesh.loop_triangles = [tri_red]
+
+        exporter = Exporter()
+        exporter.create_materials([obj])
+        exporter.create_vertex_groups([obj])
+        exporter.create_tri_groups([obj])
+        exporter.create_parts([obj])
+        exporter.create_shapes([obj])
+
+        self.assertEqual(
+            exporter.shapes[0].shape_tri_link,
+            exporter.tri_groups[0].this_tri_group_index)
+        self.assertEqual(
+            exporter.shapes[0].shape_mat_link,
+            exporter.get_default_material().this_mat_index)
+        self.assertEqual(exporter.shapes[0].shape_part_num, 1)

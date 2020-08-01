@@ -89,6 +89,7 @@ class Exporter:
         self.tri_group_by_mesh = {}  # NIFF2 triangle group by Blender mesh
         self.parts = []  # All shape parts
         self.parts_by_mesh = {}  # NIFF2 parts by Blender mesh
+        self.shapes = []  # All shapes
 
     def create_name(self, name):
         """
@@ -273,7 +274,7 @@ class Exporter:
 
     def create_parts(self, objs):
         """
-        Create and register shape parts
+        Create and register shape parts.
         """
         meshes = [obj.data for obj in objs if isinstance(obj.data, Mesh)]
 
@@ -299,6 +300,26 @@ class Exporter:
 
                 self.parts.append(part_node)
                 self.parts_by_mesh[mesh].append(part_node)
+
+    def create_shapes(self, objs):
+        """
+        Create and register shapes from meshes.
+        """
+        meshes = [obj.data for obj in objs if isinstance(obj.data, Mesh)]
+
+        for mesh in meshes:
+            shape_name = self.create_name(mesh.name+".shape")
+            tri_group = self.tri_group_by_mesh[mesh]
+            material = self.get_default_material()
+            parts = self.parts_by_mesh[mesh]
+
+            shape = niff2_shape_node_builder(len(self.shapes),
+                                             shape_name.index(),
+                                             tri_group.index(),
+                                             material.index(),
+                                             parts)
+
+            self.shapes.append(shape)
 
 
 #
@@ -330,16 +351,7 @@ def write_niff2(data, filepath):
 
     exporter.create_parts(mesh_objs)
 
-    # NIFF2 Shape <-> Blender Mesh
-    shapes = []
-    for shape_index, mesh, tri_group in zip(range(len(data.meshes)), data.meshes, exporter.tri_groups):
-        shape_name = exporter.create_name(mesh.name+".shape")
-        shape = niff2_shape_node_builder(shape_index,
-                                         shape_name.index(),
-                                         tri_group.index(),
-                                         default_material.index(),
-                                         exporter.parts_by_mesh[mesh])
-        shapes.append(shape)
+    exporter.create_shapes(mesh_objs)
 
     # NIFF2 Anim: 1 anim per object
     anim_groups = []
@@ -355,7 +367,7 @@ def write_niff2(data, filepath):
     objs = []
     for obj_index, obj, shape, anim_group in zip(range(len(mesh_objs)),
                                                  mesh_objs,
-                                                 shapes,
+                                                 exporter.shapes,
                                                  anim_groups):
         obj_name = exporter.create_name(obj.name+".obj")
         obj = niff2_obj_node_builder(obj_index,
@@ -448,7 +460,7 @@ def write_niff2(data, filepath):
     cam_list_header = niff2_cam_list_header_builder(cams)
     light_list_header = niff2_light_list_header_builder(lights)
     obj_list_header = niff2_obj_list_header_builder(objs)
-    shape_list_header = niff2_shape_list_header_builder(shapes)
+    shape_list_header = niff2_shape_list_header_builder(exporter.shapes)
     vtx_list_header = niff2_vtx_list_header_builder(exporter.vtx_groups)
     tri_list_header = niff2_tri_list_header_builder(exporter.tri_groups)
     color_list_header = niff2_color_list_header_builder(
@@ -555,8 +567,8 @@ def write_niff2(data, filepath):
     for obj in objs:
         niff2_obj_node_writer(obj, buf)
 
-    niff2_shape_list_header_writer(shape_list_header, shapes, buf)
-    for shape in shapes:
+    niff2_shape_list_header_writer(shape_list_header, exporter.shapes, buf)
+    for shape in exporter.shapes:
         niff2_shape_node_writer(shape, buf)
 
     niff2_vtx_list_header_writer(vtx_list_header, exporter.vtx_groups, buf)
