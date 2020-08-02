@@ -295,3 +295,26 @@ class TestExporter(unittest.TestCase):
             exporter.shapes[0].shape_mat_link,
             exporter.get_default_material().this_mat_index)
         self.assertEqual(exporter.shapes[0].shape_part_num, 1)
+
+    def test_create_anim_groups(self):
+        obj = Object()
+        obj.name = "obj"
+
+        obj.data = Mesh()
+
+        obj.location = [1.0, 2.0, 3.0]
+        obj.rotation_euler = [4.0, 5.0, 6.0]
+        obj.scale = [7.0, 8.0, 9.0]
+
+        exporter = Exporter()
+        exporter.create_anim_groups([obj])
+
+        self.assertEqual(exporter.anim_groups[0].anim_node.translate_x, 1.0)
+        self.assertEqual(exporter.anim_groups[0].anim_node.translate_y, 2.0)
+        self.assertEqual(exporter.anim_groups[0].anim_node.translate_z, 3.0)
+        self.assertEqual(exporter.anim_groups[0].anim_node.rotate_axis_x, 4.0)
+        self.assertEqual(exporter.anim_groups[0].anim_node.rotate_axis_y, 5.0)
+        self.assertEqual(exporter.anim_groups[0].anim_node.rotate_axis_z, 6.0)
+        self.assertEqual(exporter.anim_groups[0].anim_node.scale_x, 7.0)
+        self.assertEqual(exporter.anim_groups[0].anim_node.scale_y, 8.0)
+        self.assertEqual(exporter.anim_groups[0].anim_node.scale_z, 9.0)

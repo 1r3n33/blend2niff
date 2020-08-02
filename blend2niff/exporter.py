@@ -90,6 +90,7 @@ class Exporter:
         self.parts = []  # All shape parts
         self.parts_by_mesh = {}  # NIFF2 parts by Blender mesh
         self.shapes = []  # All shapes
+        self.anim_groups = []  # All anim groups
 
     def create_name(self, name):
         """
@@ -321,6 +322,23 @@ class Exporter:
 
             self.shapes.append(shape)
 
+    def create_anim_groups(self, objs):
+        """
+        Create and register anim matrix groups.
+        """
+        mesh_objs = [obj for obj in objs if isinstance(obj.data, Mesh)]
+
+        for obj in mesh_objs:
+            anim_name = self.create_name(obj.name+".anim")
+
+            anim_node = niff2_anim_node_builder(
+                obj.location, obj.rotation_euler, obj.scale)
+
+            anim_group = niff2_anim_group_builder(
+                len(self.anim_groups), anim_name.index(), anim_node)
+
+            self.anim_groups.append(anim_group)
+
 
 #
 # Writer entry point
@@ -353,22 +371,14 @@ def write_niff2(data, filepath):
 
     exporter.create_shapes(mesh_objs)
 
-    # NIFF2 Anim: 1 anim per object
-    anim_groups = []
-    for anim_index, obj, in zip(range(len(mesh_objs)), mesh_objs):
-        anim_name = exporter.create_name(obj.name+".anim")
-        anim_node = niff2_anim_node_builder(
-            obj.location, obj.rotation_euler, obj.scale)
-        anim_group = niff2_anim_group_builder(
-            anim_index, anim_name.index(), anim_node)
-        anim_groups.append(anim_group)
+    exporter.create_anim_groups(mesh_objs)
 
     # NIFF2 Obj: Blender Object
     objs = []
     for obj_index, obj, shape, anim_group in zip(range(len(mesh_objs)),
                                                  mesh_objs,
                                                  exporter.shapes,
-                                                 anim_groups):
+                                                 exporter.anim_groups):
         obj_name = exporter.create_name(obj.name+".obj")
         obj = niff2_obj_node_builder(obj_index,
                                      obj_name.index(),
@@ -390,22 +400,22 @@ def write_niff2(data, filepath):
         eye_anim_node = niff2_anim_node_builder(
             obj.location, [0.0, 0.0, 0.0], [0.0, 0.0, 0.0])
         eye_anim_group = niff2_anim_group_builder(
-            len(anim_groups), eye_anim_name.index(), eye_anim_node)
-        anim_groups.append(eye_anim_group)
+            len(exporter.anim_groups), eye_anim_name.index(), eye_anim_node)
+        exporter.anim_groups.append(eye_anim_group)
 
         lookat_anim_name = exporter.create_name(cam.name+".lookat.anim")
         lookat_anim_node = niff2_anim_node_builder(
             obj.location-matrix[2].xyz, [0.0, 0.0, 0.0], [0.0, 0.0, 0.0])
         lookat_anim_group = niff2_anim_group_builder(
-            len(anim_groups), lookat_anim_name.index(), lookat_anim_node)
-        anim_groups.append(lookat_anim_group)
+            len(exporter.anim_groups), lookat_anim_name.index(), lookat_anim_node)
+        exporter.anim_groups.append(lookat_anim_group)
 
         up_anim_name = exporter.create_name(cam.name+".up.anim")
         up_anim_node = niff2_anim_node_builder(
             obj.location+matrix[1].xyz, [0.0, 0.0, 0.0], [0.0, 0.0, 0.0])
         up_anim_group = niff2_anim_group_builder(
-            len(anim_groups), up_anim_name.index(), up_anim_node)
-        anim_groups.append(up_anim_group)
+            len(exporter.anim_groups), up_anim_name.index(), up_anim_node)
+        exporter.anim_groups.append(up_anim_group)
 
         eye_obj_name = exporter.create_name(cam.name+".eye.obj")
         eye_obj = niff2_obj_node_builder(
@@ -472,7 +482,7 @@ def write_niff2(data, filepath):
     mat_list_header = niff2_mat_list_header_builder(exporter.materials)
     tex_list_header = niff2_tex_list_header_builder()
     tex_img_list_header = niff2_tex_img_list_header_builder()
-    anim_list_header = niff2_anim_list_header_builder(anim_groups)
+    anim_list_header = niff2_anim_list_header_builder(exporter.anim_groups)
     coll_list_header = niff2_coll_list_header_builder()
     switch_list_header = niff2_switch_list_header_builder()
     name_list_header = niff2_name_list_header_builder(exporter.names)
@@ -608,8 +618,8 @@ def write_niff2(data, filepath):
     niff2_tex_list_header_writer(tex_list_header, buf)
     niff2_tex_img_list_header_writer(tex_img_list_header, buf)
 
-    niff2_anim_list_header_writer(anim_list_header, anim_groups, buf)
-    for anim_group in anim_groups:
+    niff2_anim_list_header_writer(anim_list_header, exporter.anim_groups, buf)
+    for anim_group in exporter.anim_groups:
         niff2_anim_group_writer(anim_group, buf)
 
     niff2_coll_list_header_writer(coll_list_header, buf)
