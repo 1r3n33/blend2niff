@@ -295,6 +295,7 @@ class TestExporter(unittest.TestCase):
             exporter.shapes[0].shape_mat_link,
             exporter.get_default_material().this_mat_index)
         self.assertEqual(exporter.shapes[0].shape_part_num, 1)
+        self.assertEqual(exporter.shape_by_mesh[mesh], exporter.shapes[0])
 
     def test_create_anim_groups(self):
         obj = Object()
@@ -318,3 +319,62 @@ class TestExporter(unittest.TestCase):
         self.assertEqual(exporter.anim_groups[0].anim_node.scale_x, 7.0)
         self.assertEqual(exporter.anim_groups[0].anim_node.scale_y, 8.0)
         self.assertEqual(exporter.anim_groups[0].anim_node.scale_z, 9.0)
+        self.assertEqual(
+            exporter.anim_group_by_mesh[obj.data], exporter.anim_groups[0])
+
+    def test_create_objects(self):
+        obj = Object()
+        obj.name = "obj"
+
+        mesh = Mesh()
+        mesh.name = "mesh"
+
+        obj.data = mesh
+        obj.location = [1.0, 2.0, 3.0]
+        obj.rotation_euler = [4.0, 5.0, 6.0]
+        obj.scale = [7.0, 8.0, 9.0]
+
+        mat_red = Material()
+        mat_red.name = "red"
+        mat_red.diffuse_color = [1.0, 0.0, 0.0, 1.0]
+
+        mesh.materials = [mat_red]
+
+        vertex = MeshVertex()
+        vertex.co = [0.0, 0.0, 0.0]
+
+        mesh.vertices = [vertex]*3
+
+        tri_red = MeshLoopTriangle()
+        tri_red.vertices = [0, 1, 2]
+        tri_red.material_index = 0
+
+        mesh.loop_triangles = [tri_red]
+
+        exporter = Exporter()
+        exporter.create_materials([obj])
+        exporter.create_vertex_groups([obj])
+        exporter.create_tri_groups([obj])
+        exporter.create_parts([obj])
+        exporter.create_shapes([obj])
+        exporter.create_anim_groups([obj])
+        exporter.create_objects([obj])
+
+        self.assertEqual(
+            exporter.objs[0].obj_shape_link,
+            exporter.shapes[0].this_shape_index)
+        self.assertEqual(
+            exporter.objs[0].obj_mat_link,
+            exporter.materials[0].this_mat_index)
+        self.assertEqual(
+            exporter.objs[0].obj_anim_link,
+            exporter.anim_groups[0].this_anim_group_index)
+        self.assertEqual(
+            exporter.objs[0].obj_shape_link,
+            exporter.shape_by_mesh[mesh].this_shape_index)
+        self.assertEqual(
+            exporter.objs[0].obj_mat_link,
+            exporter.get_default_material().this_mat_index)
+        self.assertEqual(
+            exporter.objs[0].obj_anim_link,
+            exporter.anim_group_by_mesh[mesh].this_anim_group_index)

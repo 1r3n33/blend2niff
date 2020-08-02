@@ -90,7 +90,10 @@ class Exporter:
         self.parts = []  # All shape parts
         self.parts_by_mesh = {}  # NIFF2 parts by Blender mesh
         self.shapes = []  # All shapes
+        self.shape_by_mesh = {}  # NIFF2 shape by Blender mesh
         self.anim_groups = []  # All anim groups
+        self.anim_group_by_mesh = {}  # NIFF2 anim group by Blender mesh
+        self.objs = []  # All objects
 
     def create_name(self, name):
         """
@@ -321,6 +324,7 @@ class Exporter:
                                              parts)
 
             self.shapes.append(shape)
+            self.shape_by_mesh[mesh] = shape
 
     def create_anim_groups(self, objs):
         """
@@ -338,6 +342,26 @@ class Exporter:
                 len(self.anim_groups), anim_name.index(), anim_node)
 
             self.anim_groups.append(anim_group)
+            self.anim_group_by_mesh[obj.data] = anim_group
+
+    def create_objects(self, objs):
+        """
+        Create and register all 3D objects.
+        """
+        mesh_objs = [obj for obj in objs if isinstance(obj.data, Mesh)]
+
+        for obj in mesh_objs:
+            obj_name = self.create_name(obj.name+".obj")
+            obj_shape = self.shape_by_mesh[obj.data]
+            obj_material = self.get_default_material()
+            obj_anim_group = self.anim_group_by_mesh[obj.data]
+
+            obj = niff2_obj_node_builder(len(self.objs),
+                                         obj_name.index(),
+                                         obj_shape.index(),
+                                         obj_material.index(),
+                                         obj_anim_group.index())
+            self.objs.append(obj)
 
 
 #
@@ -355,7 +379,6 @@ def write_niff2(data, filepath):
     scene_name = exporter.create_name(filename+".scene")
 
     exporter.create_materials(mesh_objs)
-    default_material = exporter.get_default_material()
 
     exporter.create_vertex_groups(mesh_objs)
 
@@ -373,19 +396,7 @@ def write_niff2(data, filepath):
 
     exporter.create_anim_groups(mesh_objs)
 
-    # NIFF2 Obj: Blender Object
-    objs = []
-    for obj_index, obj, shape, anim_group in zip(range(len(mesh_objs)),
-                                                 mesh_objs,
-                                                 exporter.shapes,
-                                                 exporter.anim_groups):
-        obj_name = exporter.create_name(obj.name+".obj")
-        obj = niff2_obj_node_builder(obj_index,
-                                     obj_name.index(),
-                                     shape.index(),
-                                     default_material.index(),
-                                     anim_group.index())
-        objs.append(obj)
+    exporter.create_objects(mesh_objs)
 
     # NIFF2 Cam.
     cam_objs = list(
@@ -419,18 +430,18 @@ def write_niff2(data, filepath):
 
         eye_obj_name = exporter.create_name(cam.name+".eye.obj")
         eye_obj = niff2_obj_node_builder(
-            len(objs), eye_obj_name.index(), BAD_INDEX, BAD_INDEX, eye_anim_group.index())
-        objs.append(eye_obj)
+            len(exporter.objs), eye_obj_name.index(), BAD_INDEX, BAD_INDEX, eye_anim_group.index())
+        exporter.objs.append(eye_obj)
 
         lookat_obj_name = exporter.create_name(cam.name+".lookat.obj")
         lookat_obj = niff2_obj_node_builder(
-            len(objs), lookat_obj_name.index(), BAD_INDEX, BAD_INDEX, lookat_anim_group.index())
-        objs.append(lookat_obj)
+            len(exporter.objs), lookat_obj_name.index(), BAD_INDEX, BAD_INDEX, lookat_anim_group.index())
+        exporter.objs.append(lookat_obj)
 
         up_obj_name = exporter.create_name(cam.name+".up.obj")
         up_obj = niff2_obj_node_builder(
-            len(objs), up_obj_name.index(), BAD_INDEX, BAD_INDEX, up_anim_group.index())
-        objs.append(up_obj)
+            len(exporter.objs), up_obj_name.index(), BAD_INDEX, BAD_INDEX, up_anim_group.index())
+        exporter.objs.append(up_obj)
 
         cam_name = exporter.create_name(cam.name+".cam")
         cam_node = niff2_cam_node_builder(
@@ -465,11 +476,11 @@ def write_niff2(data, filepath):
 
     # NIFF2 Header
     scene_header = niff2_scene_header_builder(
-        scene_name.index(), objs, cams, envs, lights)
+        scene_name.index(), exporter.objs, cams, envs, lights)
     env_list_header = niff2_env_list_header_builder(envs)
     cam_list_header = niff2_cam_list_header_builder(cams)
     light_list_header = niff2_light_list_header_builder(lights)
-    obj_list_header = niff2_obj_list_header_builder(objs)
+    obj_list_header = niff2_obj_list_header_builder(exporter.objs)
     shape_list_header = niff2_shape_list_header_builder(exporter.shapes)
     vtx_list_header = niff2_vtx_list_header_builder(exporter.vtx_groups)
     tri_list_header = niff2_tri_list_header_builder(exporter.tri_groups)
@@ -573,8 +584,8 @@ def write_niff2(data, filepath):
     for light in lights:
         niff2_light_node_writer(light, buf)
 
-    niff2_obj_list_header_writer(obj_list_header, objs, buf)
-    for obj in objs:
+    niff2_obj_list_header_writer(obj_list_header, exporter.objs, buf)
+    for obj in exporter.objs:
         niff2_obj_node_writer(obj, buf)
 
     niff2_shape_list_header_writer(shape_list_header, exporter.shapes, buf)
