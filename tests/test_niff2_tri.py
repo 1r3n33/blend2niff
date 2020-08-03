@@ -12,8 +12,9 @@ from blend2niff.niff2.niff2_tri import (
 class TestNiff2Tri(unittest.TestCase):
 
     def test_niff2_tri_list_header_builder(self):
-        one_tri = niff2_tri_group_builder(1, 2, 3, [4, 5, 6])
-        two_tris = niff2_tri_group_builder(1, 2, 3, [4, 5, 6, 7, 8, 9])
+        one_tri = niff2_tri_group_builder(1, 2, 3, [4, 5, 6], [7, 8, 9])
+        two_tris = niff2_tri_group_builder(
+            1, 2, 3, [4, 5, 6, 7, 8, 9], [10, 11, 12, 13, 14, 15])
         tri_list_header = niff2_tri_list_header_builder([one_tri, two_tris])
         self.assertEqual(tri_list_header.tri_list_tag, 0x00080000)
         self.assertEqual(tri_list_header.tri_list_header_size, 32)
@@ -23,8 +24,9 @@ class TestNiff2Tri(unittest.TestCase):
         self.assertEqual(tri_list_header.user_extension_block_size, 0)
 
     def test_niff2_tri_list_header_writer(self):
-        one_tri = niff2_tri_group_builder(1, 2, 3, [4, 5, 6])
-        two_tris = niff2_tri_group_builder(1, 2, 3, [4, 5, 6, 7, 8, 9])
+        one_tri = niff2_tri_group_builder(1, 2, 3, [4, 5, 6], [7, 8, 9])
+        two_tris = niff2_tri_group_builder(
+            1, 2, 3, [4, 5, 6, 7, 8, 9], [10, 11, 12, 13, 14, 15])
         tri_groups = [one_tri, two_tris]
         tri_list_header = niff2_tri_list_header_builder(tri_groups)
         buf = niff2_tri_list_header_writer(
@@ -39,12 +41,13 @@ class TestNiff2Tri(unittest.TestCase):
                      0x00, 0x00, 0x00, 0xD0]
         self.assertEqual(list(buf), byte_list)
 
-    @parameterized.expand([("one_tri", 1, 2, 3, [4, 5, 6], 132),
-                           ("two_tris", 1, 2, 3, [4, 5, 6, 7, 8, 9], 208)])
+    @parameterized.expand([
+        ("one_tri", 1, 2, 3, [4, 5, 6], [7, 8, 9], 132),
+        ("two_tris", 1, 2, 3, [4, 5, 6, 7, 8, 9], [10, 11, 12, 13, 14, 15], 208)])
     def test_niff2_tri_group_builder(self, _, index, name_index, vtx_group_index, vtx_indices,
-                                     expected_size):
+                                     normal_indices, expected_size):
         tri_group = niff2_tri_group_builder(
-            index, name_index, vtx_group_index, vtx_indices)
+            index, name_index, vtx_group_index, vtx_indices, normal_indices)
         self.assertEqual(tri_group.tri_group_tag, 0x00080100)
         self.assertEqual(tri_group.this_tri_group_index, index)
         self.assertEqual(tri_group.tri_group_header_size, 32)
@@ -63,7 +66,7 @@ class TestNiff2Tri(unittest.TestCase):
             self.assertEqual(tri_index, tri.this_tri_index)
 
     def test_niff2_tri_group_writer(self):
-        tri_group = niff2_tri_group_builder(12, 34, 56, [7, 8, 9])
+        tri_group = niff2_tri_group_builder(12, 34, 56, [1, 2, 3], [4, 5, 6])
         buf = niff2_tri_group_writer(tri_group, bytearray())
         byte_list = [0x00, 0x08, 0x01, 0x00,
                      0x00, 0x00, 0x00, 0x0C,
@@ -84,25 +87,25 @@ class TestNiff2Tri(unittest.TestCase):
                      0x00, 0x00, 0x00, 0x4C,
                      0x00, 0x00, 0x00, 0x00,
                      0x00, 0x00, 0x00, 0x00,
-                     0x00, 0x00, 0x00, 0x07,
+                     0x00, 0x00, 0x00, 0x01,
                      0x00, 0x00, 0x00, 0x00,
-                     0x00, 0x00, 0x00, 0x07,
-                     0x00, 0x00, 0x00, 0x07,
-                     0x00, 0x00, 0x00, 0x08,
+                     0x00, 0x00, 0x00, 0x04,
+                     0x00, 0x00, 0x00, 0x01,
+                     0x00, 0x00, 0x00, 0x02,
                      0x00, 0x00, 0x00, 0x00,
-                     0x00, 0x00, 0x00, 0x08,
-                     0x00, 0x00, 0x00, 0x08,
-                     0x00, 0x00, 0x00, 0x09,
+                     0x00, 0x00, 0x00, 0x05,
+                     0x00, 0x00, 0x00, 0x02,
+                     0x00, 0x00, 0x00, 0x03,
                      0x00, 0x00, 0x00, 0x00,
-                     0x00, 0x00, 0x00, 0x09,
-                     0x00, 0x00, 0x00, 0x09,
+                     0x00, 0x00, 0x00, 0x06,
+                     0x00, 0x00, 0x00, 0x03,
                      0x00, 0x00, 0x00, 0x00,
                      0x00, 0x00, 0x00, 0x00]
         self.assertEqual(list(buf), byte_list)
 
-    @parameterized.expand([("default", 1, [2, 3, 4], 76)])
-    def test_niff2_tri_node_builder(self, _, index, vtx_indices, expected_size):
-        tri = niff2_tri_node_builder(index, vtx_indices)
+    @parameterized.expand([("default", 1, [2, 3, 4], [5, 6, 7], 76)])
+    def test_niff2_tri_node_builder(self, _, index, vtx_indices, normal_indices, expected_size):
+        tri = niff2_tri_node_builder(index, vtx_indices, normal_indices)
         self.assertEqual(tri.tri_tag, 0x00080101)
         self.assertEqual(tri.this_tri_index, index)
         self.assertEqual(tri.tri_size, expected_size)
@@ -110,21 +113,21 @@ class TestNiff2Tri(unittest.TestCase):
         self.assertEqual(tri.tri_color_index, 0)
         self.assertEqual(tri.vtx_index0, 2)
         self.assertEqual(tri.st_index0, 0)
-        self.assertEqual(tri.vtx_nv_index0, 2)
+        self.assertEqual(tri.vtx_nv_index0, 5)
         self.assertEqual(tri.vtx_color_index0, 2)
         self.assertEqual(tri.vtx_index1, 3)
         self.assertEqual(tri.st_index1, 0)
-        self.assertEqual(tri.vtx_nv_index1, 3)
+        self.assertEqual(tri.vtx_nv_index1, 6)
         self.assertEqual(tri.vtx_color_index1, 3)
         self.assertEqual(tri.vtx_index2, 4)
         self.assertEqual(tri.st_index2, 0)
-        self.assertEqual(tri.vtx_nv_index2, 4)
+        self.assertEqual(tri.vtx_nv_index2, 7)
         self.assertEqual(tri.vtx_color_index2, 4)
         self.assertEqual(tri.nintendo_extension_block_size, 0)
         self.assertEqual(tri.user_extension_block_size, 0)
 
     def test_niff2_tri_node_writer(self):
-        tri = niff2_tri_node_builder(123, [4, 5, 6])
+        tri = niff2_tri_node_builder(123, [4, 5, 6], [7, 8, 9])
         buf = niff2_tri_node_writer(tri, bytearray())
         byte_list = [0x00, 0x08, 0x01, 0x01,
                      0x00, 0x00, 0x00, 0x7B,
@@ -133,15 +136,15 @@ class TestNiff2Tri(unittest.TestCase):
                      0x00, 0x00, 0x00, 0x00,
                      0x00, 0x00, 0x00, 0x04,
                      0x00, 0x00, 0x00, 0x00,
-                     0x00, 0x00, 0x00, 0x04,
+                     0x00, 0x00, 0x00, 0x07,
                      0x00, 0x00, 0x00, 0x04,
                      0x00, 0x00, 0x00, 0x05,
                      0x00, 0x00, 0x00, 0x00,
-                     0x00, 0x00, 0x00, 0x05,
+                     0x00, 0x00, 0x00, 0x08,
                      0x00, 0x00, 0x00, 0x05,
                      0x00, 0x00, 0x00, 0x06,
                      0x00, 0x00, 0x00, 0x00,
-                     0x00, 0x00, 0x00, 0x06,
+                     0x00, 0x00, 0x00, 0x09,
                      0x00, 0x00, 0x00, 0x06,
                      0x00, 0x00, 0x00, 0x00,
                      0x00, 0x00, 0x00, 0x00]

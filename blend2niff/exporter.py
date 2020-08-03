@@ -84,6 +84,7 @@ class Exporter:
         self.vtx_color_groups = []  # All vertex color groups
         self.tri_nv_groups = []  # All triangle normal groups
         self.vtx_nv_groups = []  # All vertex normal groups
+        self.normal_indices_by_mesh = {}  # vertex normal indices by Blender mesh
         self.st_groups = []  # All vertex texture coord groups
         self.tri_groups = []  # All triangle groups
         self.tri_group_by_mesh = {}  # NIFF2 triangle group by Blender mesh
@@ -215,8 +216,6 @@ class Exporter:
         Also create default up normal.
         Make sure to have the same number of tri_vector_groups & vtx_vector_groups.
         This prevents nifftools/checknb2.exe from crashing.
-        Do not support smooth groups: 1 normal per vertex!
-        Indices are all aligned on both vertex coords and vertex normals.
         """
         default_nv = [0.0, 1.0, 0.0]  # up
         default_tri_nv_group = niff2_tri_nv_group_builder(0, default_nv)
@@ -229,23 +228,36 @@ class Exporter:
         for mesh in meshes:
             mesh.calc_loop_triangles()
             mesh.calc_normals_split()
-            vtx_normals = [float]*len(mesh.vertices)*3
 
+            # Collect unique normals in index_by_normal with undefined indices
+            index_by_normal = {}
             for tri in mesh.loop_triangles:
                 for i in range(3):
-                    vtx_index = tri.vertices[i]
                     loop_index = tri.loops[i]
-                    normal = mesh.loops[loop_index].normal
-                    vtx_normals[(vtx_index*3)+0] = normal[0]
-                    vtx_normals[(vtx_index*3)+1] = normal[1]
-                    vtx_normals[(vtx_index*3)+2] = normal[2]
+                    normal = tuple(mesh.loops[loop_index].normal)
+                    index_by_normal[normal] = -1
 
+            # Map keys to normals and set indices
+            normals = list(index_by_normal.keys())
+            for index, normal in zip(range(len(normals)), normals):
+                index_by_normal[normal] = index
+
+            # Create mesh normals indices
+            normal_indices = []
+            for tri in mesh.loop_triangles:
+                for i in range(3):
+                    loop_index = tri.loops[i]
+                    normal = tuple(mesh.loops[loop_index].normal)
+                    normal_indices.append(index_by_normal[normal])
+            self.normal_indices_by_mesh[mesh] = normal_indices
+
+            # Create NIFF2 data
             tri_nv_group = niff2_tri_nv_group_builder(
                 len(self.tri_nv_groups), default_nv)
             self.tri_nv_groups.append(tri_nv_group)
 
             vtx_nv_group = niff2_vtx_nv_group_builder(
-                len(self.vtx_nv_groups), vtx_normals)
+                len(self.vtx_nv_groups), [value for normal in normals for value in normal])
             self.vtx_nv_groups.append(vtx_nv_group)
 
     def create_st_groups(self):
@@ -269,9 +281,13 @@ class Exporter:
             vtx_group = self.vtx_group_by_mesh[mesh]
             vtx_indices = [
                 index for tri in mesh.loop_triangles for index in tri.vertices]
+            normal_indices = self.normal_indices_by_mesh[mesh]
 
-            tri_group = niff2_tri_group_builder(
-                len(self.tri_groups), tri_group_name.index(), vtx_group.index(), vtx_indices)
+            tri_group = niff2_tri_group_builder(len(self.tri_groups),
+                                                tri_group_name.index(),
+                                                vtx_group.index(),
+                                                vtx_indices,
+                                                normal_indices)
 
             self.tri_groups.append(tri_group)
             self.tri_group_by_mesh[mesh] = tri_group

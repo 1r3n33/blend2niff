@@ -159,8 +159,12 @@ class TestExporter(unittest.TestCase):
         exporter = Exporter()
         exporter.create_vector_groups([not_a_mesh, mesh])
 
-        self.assertEqual(len(exporter.tri_nv_groups),
-                         len(exporter.vtx_nv_groups))
+        self.assertEqual(
+            len(exporter.tri_nv_groups), len(exporter.vtx_nv_groups))
+        self.assertEqual(
+            not_a_mesh.data in exporter.normal_indices_by_mesh, False)
+        self.assertEqual(
+            exporter.normal_indices_by_mesh[mesh.data], [0, 1, 2])
         self.assertEqual(exporter.tri_nv_groups[0].tri_nv_num, 1)
         self.assertEqual(exporter.tri_nv_groups[1].tri_nv_num, 1)
         self.assertEqual(exporter.vtx_nv_groups[0].vtx_nv_num, 1)
@@ -183,12 +187,18 @@ class TestExporter(unittest.TestCase):
 
         mesh.data.vertices = [vertex]*3
 
+        loop = MeshLoop()
+        loop.normal = [1.0, 2.0, 3.0]
+        mesh.data.loops = [loop]*3
+
         tri = MeshLoopTriangle()
         tri.vertices = [0, 1, 2]
+        tri.loops = [0, 1, 2]
         mesh.data.loop_triangles = [tri]
 
         exporter = Exporter()
         exporter.create_vertex_groups([not_a_mesh, mesh])
+        exporter.create_vector_groups([not_a_mesh, mesh])
         exporter.create_tri_groups([not_a_mesh, mesh])
 
         self.assertEqual(len(exporter.tri_groups), 1)
@@ -223,16 +233,23 @@ class TestExporter(unittest.TestCase):
 
         mesh.vertices = [vertex]*9
 
+        loop = MeshLoop()
+        loop.normal = [1.0, 2.0, 3.0]
+        mesh.loops = [loop]*3
+
         tri_red = MeshLoopTriangle()
         tri_red.vertices = [0, 1, 2]
+        tri_red.loops = [0, 1, 2]
         tri_red.material_index = 0
 
         tri_green = MeshLoopTriangle()
         tri_green.vertices = [3, 4, 5]
+        tri_green.loops = [0, 1, 2]
         tri_green.material_index = 1
 
         tri_blue = MeshLoopTriangle()
         tri_blue.vertices = [6, 7, 8]
+        tri_blue.loops = [0, 1, 2]
         tri_blue.material_index = 2
 
         mesh.loop_triangles = [tri_red, tri_green, tri_blue]
@@ -240,6 +257,7 @@ class TestExporter(unittest.TestCase):
         exporter = Exporter()
         exporter.create_materials([obj])
         exporter.create_vertex_groups([obj])
+        exporter.create_vector_groups([obj])
         exporter.create_tri_groups([obj])
         exporter.create_parts([obj])
 
@@ -275,8 +293,13 @@ class TestExporter(unittest.TestCase):
 
         mesh.vertices = [vertex]*3
 
+        loop = MeshLoop()
+        loop.normal = [1.0, 2.0, 3.0]
+        mesh.loops = [loop]*3
+
         tri_red = MeshLoopTriangle()
         tri_red.vertices = [0, 1, 2]
+        tri_red.loops = [0, 1, 2]
         tri_red.material_index = 0
 
         mesh.loop_triangles = [tri_red]
@@ -284,6 +307,7 @@ class TestExporter(unittest.TestCase):
         exporter = Exporter()
         exporter.create_materials([obj])
         exporter.create_vertex_groups([obj])
+        exporter.create_vector_groups([obj])
         exporter.create_tri_groups([obj])
         exporter.create_parts([obj])
         exporter.create_shapes([obj])
@@ -345,8 +369,13 @@ class TestExporter(unittest.TestCase):
 
         mesh.vertices = [vertex]*3
 
+        loop = MeshLoop()
+        loop.normal = [1.0, 2.0, 3.0]
+        mesh.loops = [loop]*3
+
         tri_red = MeshLoopTriangle()
         tri_red.vertices = [0, 1, 2]
+        tri_red.loops = [0, 1, 2]
         tri_red.material_index = 0
 
         mesh.loop_triangles = [tri_red]
@@ -354,6 +383,7 @@ class TestExporter(unittest.TestCase):
         exporter = Exporter()
         exporter.create_materials([obj])
         exporter.create_vertex_groups([obj])
+        exporter.create_vector_groups([obj])
         exporter.create_tri_groups([obj])
         exporter.create_parts([obj])
         exporter.create_shapes([obj])
