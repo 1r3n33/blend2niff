@@ -7,6 +7,8 @@ from bpy.types import (Material,
                        MeshLoopColor,
                        MeshLoopColorLayer,
                        MeshLoopTriangle,
+                       MeshUVLoop,
+                       MeshUVLoopLayer,
                        MeshVertex,
                        Object)
 from blend2niff.exporter import Exporter
@@ -171,9 +173,45 @@ class TestExporter(unittest.TestCase):
         self.assertEqual(exporter.vtx_nv_groups[1].vtx_nv_num, 3)
 
     def test_create_st_groups(self):
+        not_a_mesh = Object()
+        mesh = Object()
+        mesh_no_uv_layer = Object()
+
+        mesh.data = Mesh()
+        mesh_no_uv_layer.data = Mesh()
+
+        vertex = MeshVertex()
+        mesh.data.vertices = [vertex]*3
+
+        uv_loop0 = MeshUVLoop()
+        uv_loop0.uv = [0.0, 0.0]
+        uv_loop1 = MeshUVLoop()
+        uv_loop1.uv = [0.5, 0.5]
+        uv_loop2 = MeshUVLoop()
+        uv_loop2.uv = [1.0, 1.0]
+
+        uv_loop_layer = MeshUVLoopLayer()
+        uv_loop_layer.data = [uv_loop0, uv_loop1, uv_loop2]
+        mesh.data.uv_layers = [uv_loop_layer]
+
+        tri = MeshLoopTriangle()
+        tri.vertices = [0, 1, 2]
+        tri.loops = [0, 1, 2]
+        mesh.data.loop_triangles = [tri]
+        mesh_no_uv_layer.data.loop_triangles = [tri]*2
+
         exporter = Exporter()
-        exporter.create_st_groups()
+        exporter.create_st_groups([not_a_mesh, mesh, mesh_no_uv_layer])
+
+        self.assertEqual(
+            not_a_mesh.data in exporter.st_indices_by_mesh, False)
+        self.assertEqual(
+            exporter.st_indices_by_mesh[mesh.data], [0, 1, 2])
+        self.assertEqual(
+            exporter.st_indices_by_mesh[mesh_no_uv_layer.data], [0]*6)
         self.assertEqual(exporter.st_groups[0].st_num, 1)
+        self.assertEqual(exporter.st_groups[1].st_num, 3)
+        self.assertEqual(exporter.st_groups[2].st_num, 1)
 
     def test_create_tri_groups(self):
         not_a_mesh = Object()
@@ -187,6 +225,13 @@ class TestExporter(unittest.TestCase):
 
         mesh.data.vertices = [vertex]*3
 
+        uv_loop = MeshUVLoop()
+        uv_loop.uv = [0.5, 0.5]
+
+        uv_loop_layer = MeshUVLoopLayer()
+        uv_loop_layer.data = [uv_loop]*3
+        mesh.data.uv_layers = [uv_loop_layer]
+
         loop = MeshLoop()
         loop.normal = [1.0, 2.0, 3.0]
         mesh.data.loops = [loop]*3
@@ -199,6 +244,7 @@ class TestExporter(unittest.TestCase):
         exporter = Exporter()
         exporter.create_vertex_groups([not_a_mesh, mesh])
         exporter.create_vector_groups([not_a_mesh, mesh])
+        exporter.create_st_groups([not_a_mesh, mesh])
         exporter.create_tri_groups([not_a_mesh, mesh])
 
         self.assertEqual(len(exporter.tri_groups), 1)
@@ -233,6 +279,13 @@ class TestExporter(unittest.TestCase):
 
         mesh.vertices = [vertex]*9
 
+        uv_loop = MeshUVLoop()
+        uv_loop.uv = [0.5, 0.5]
+
+        uv_loop_layer = MeshUVLoopLayer()
+        uv_loop_layer.data = [uv_loop]*3
+        mesh.uv_layers = [uv_loop_layer]
+
         loop = MeshLoop()
         loop.normal = [1.0, 2.0, 3.0]
         mesh.loops = [loop]*3
@@ -258,6 +311,7 @@ class TestExporter(unittest.TestCase):
         exporter.create_materials([obj])
         exporter.create_vertex_groups([obj])
         exporter.create_vector_groups([obj])
+        exporter.create_st_groups([obj])
         exporter.create_tri_groups([obj])
         exporter.create_parts([obj])
 
@@ -293,6 +347,13 @@ class TestExporter(unittest.TestCase):
 
         mesh.vertices = [vertex]*3
 
+        uv_loop = MeshUVLoop()
+        uv_loop.uv = [0.5, 0.5]
+
+        uv_loop_layer = MeshUVLoopLayer()
+        uv_loop_layer.data = [uv_loop]*3
+        mesh.uv_layers = [uv_loop_layer]
+
         loop = MeshLoop()
         loop.normal = [1.0, 2.0, 3.0]
         mesh.loops = [loop]*3
@@ -308,6 +369,7 @@ class TestExporter(unittest.TestCase):
         exporter.create_materials([obj])
         exporter.create_vertex_groups([obj])
         exporter.create_vector_groups([obj])
+        exporter.create_st_groups([obj])
         exporter.create_tri_groups([obj])
         exporter.create_parts([obj])
         exporter.create_shapes([obj])
@@ -369,6 +431,13 @@ class TestExporter(unittest.TestCase):
 
         mesh.vertices = [vertex]*3
 
+        uv_loop = MeshUVLoop()
+        uv_loop.uv = [0.5, 0.5]
+
+        uv_loop_layer = MeshUVLoopLayer()
+        uv_loop_layer.data = [uv_loop]*3
+        mesh.uv_layers = [uv_loop_layer]
+
         loop = MeshLoop()
         loop.normal = [1.0, 2.0, 3.0]
         mesh.loops = [loop]*3
@@ -384,6 +453,7 @@ class TestExporter(unittest.TestCase):
         exporter.create_materials([obj])
         exporter.create_vertex_groups([obj])
         exporter.create_vector_groups([obj])
+        exporter.create_st_groups([obj])
         exporter.create_tri_groups([obj])
         exporter.create_parts([obj])
         exporter.create_shapes([obj])

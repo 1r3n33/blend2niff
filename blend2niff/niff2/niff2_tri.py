@@ -72,11 +72,17 @@ def niff2_tri_list_header_writer(tlh, tri_groups, buf):
 # Tri Group
 #
 class Niff2TriGroup:
-    def __init__(self, index, name_index, vtx_group_index, vtx_indices, normal_indices):
+    def __init__(self,
+                 index,
+                 name_index,
+                 vtx_group_index,
+                 vtx_indices,
+                 normal_indices,
+                 st_indices):
         tris = []
         for i in range(0, len(vtx_indices), 3):
             tris.append(niff2_tri_node_builder(
-                len(tris), vtx_indices[i:i+3], normal_indices[i:i+3]))
+                len(tris), vtx_indices[i:i+3], normal_indices[i:i+3], st_indices[i:i+3]))
 
         tri_size = sum(map(lambda tri: tri.tri_size, tris))
 
@@ -93,7 +99,7 @@ class Niff2TriGroup:
         self.vtx_color_group_index = vtx_group_index+1
         self.tri_nv_group_index = 0  # Do not use BAD_INDEX
         self.vtx_nv_group_index = vtx_group_index+1
-        self.st_group_index = 0  # Do not use BAD_INDEX
+        self.st_group_index = vtx_group_index+1
         self.tris = tris
 
     def index(self):
@@ -104,12 +110,14 @@ def niff2_tri_group_builder(tri_group_index,
                             tri_group_name_index,
                             vtx_group_index,
                             vtx_indices,
-                            normal_indices):
+                            normal_indices,
+                            st_indices):
     return Niff2TriGroup(tri_group_index,
                          tri_group_name_index,
                          vtx_group_index,
                          vtx_indices,
-                         normal_indices)
+                         normal_indices,
+                         st_indices)
 
 
 def niff2_tri_group_writer(tri_group, buf):
@@ -138,30 +146,30 @@ def niff2_tri_group_writer(tri_group, buf):
 # Tri Node
 #
 class Niff2TriNode:
-    def __init__(self, index, vtx_indices, normal_indices):
+    def __init__(self, index, vtx_indices, normal_indices, st_indices):
         self.tri_tag = TAG_TRI
         self.this_tri_index = index
         self.tri_size = (19*4)
         self.tri_nv_index = 0
         self.tri_color_index = 0
         self.vtx_index0 = vtx_indices[0]
-        self.st_index0 = 0
+        self.st_index0 = st_indices[0]
         self.vtx_nv_index0 = normal_indices[0]
         self.vtx_color_index0 = vtx_indices[0]
         self.vtx_index1 = vtx_indices[1]
-        self.st_index1 = 0
+        self.st_index1 = st_indices[1]
         self.vtx_nv_index1 = normal_indices[1]
         self.vtx_color_index1 = vtx_indices[1]
         self.vtx_index2 = vtx_indices[2]
-        self.st_index2 = 0
+        self.st_index2 = st_indices[2]
         self.vtx_nv_index2 = normal_indices[2]
         self.vtx_color_index2 = vtx_indices[2]
         self.nintendo_extension_block_size = 0
         self.user_extension_block_size = 0
 
 
-def niff2_tri_node_builder(index, vtx_indices, normal_indices):
-    return Niff2TriNode(index, vtx_indices, normal_indices)
+def niff2_tri_node_builder(index, vtx_indices, normal_indices, st_indices):
+    return Niff2TriNode(index, vtx_indices, normal_indices, st_indices)
 
 
 def niff2_tri_node_writer(tri, buf):

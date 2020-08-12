@@ -86,6 +86,7 @@ class Exporter:
         self.vtx_nv_groups = []  # All vertex normal groups
         self.normal_indices_by_mesh = {}  # vertex normal indices by Blender mesh
         self.st_groups = []  # All vertex texture coord groups
+        self.st_indices_by_mesh = {}  # tex coord indices by Blender mesh
         self.tri_groups = []  # All triangle groups
         self.tri_group_by_mesh = {}  # NIFF2 triangle group by Blender mesh
         self.parts = []  # All shape parts
@@ -260,13 +261,52 @@ class Exporter:
                 len(self.vtx_nv_groups), [value for normal in normals for value in normal])
             self.vtx_nv_groups.append(vtx_nv_group)
 
-    def create_st_groups(self):
+    def create_st_groups(self, objs):
         """
-        Create and register default vertex texture coord group.
+        Create and register texture coord groups.
         """
         default_st = [0.5, 0.5]  # center
         default_st_group = niff2_st_group_builder(0, default_st)
         self.st_groups.append(default_st_group)
+
+        meshes = [obj.data for obj in objs if isinstance(obj.data, Mesh)]
+
+        for mesh in meshes:
+            if mesh.uv_layers:
+                mesh.calc_loop_triangles()
+
+                # Collect unique tex coords in index_by_st with undefined indices
+                index_by_st = {}
+                for tri in mesh.loop_triangles:
+                    for i in range(3):
+                        loop_index = tri.loops[i]
+                        s_t = tuple(mesh.uv_layers[0].data[loop_index].uv)
+                        index_by_st[s_t] = -1
+
+                # Map keys to st and set indices
+                st_list = list(index_by_st.keys())
+                for index, s_t in zip(range(len(st_list)), st_list):
+                    index_by_st[s_t] = index
+
+                # Create mesh st indices
+                st_indices = []
+                for tri in mesh.loop_triangles:
+                    for i in range(3):
+                        loop_index = tri.loops[i]
+                        s_t = tuple(mesh.uv_layers[0].data[loop_index].uv)
+                        st_indices.append(index_by_st[s_t])
+                self.st_indices_by_mesh[mesh] = st_indices
+
+                # Create NIFF2 data
+                st_group = niff2_st_group_builder(
+                    len(self.st_groups), [value for st in st_list for value in st])
+                self.st_groups.append(st_group)
+
+            else:
+                self.st_indices_by_mesh[mesh] = [0]*len(mesh.loop_triangles)*3
+                st_group = niff2_st_group_builder(
+                    len(self.st_groups), default_st)
+                self.st_groups.append(st_group)
 
     def create_tri_groups(self, objs):
         """
@@ -282,12 +322,14 @@ class Exporter:
             vtx_indices = [
                 index for tri in mesh.loop_triangles for index in tri.vertices]
             normal_indices = self.normal_indices_by_mesh[mesh]
+            st_indices = self.st_indices_by_mesh[mesh]
 
             tri_group = niff2_tri_group_builder(len(self.tri_groups),
                                                 tri_group_name.index(),
                                                 vtx_group.index(),
                                                 vtx_indices,
-                                                normal_indices)
+                                                normal_indices,
+                                                st_indices)
 
             self.tri_groups.append(tri_group)
             self.tri_group_by_mesh[mesh] = tri_group
@@ -402,7 +444,7 @@ def write_niff2(data, filepath):
 
     exporter.create_vector_groups(mesh_objs)
 
-    exporter.create_st_groups()
+    exporter.create_st_groups(mesh_objs)
 
     exporter.create_tri_groups(mesh_objs)
 
