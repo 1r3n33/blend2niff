@@ -1,7 +1,6 @@
 #
 # Consts
 #
-TAG_TEX_LIST = 0x000b0000
 TAG_TEX_IMG_LIST = 0x00120000
 TAG_COLL_LIST = 0x000d0000
 TAG_SWITCH_LIST = 0x00130000
@@ -18,43 +17,6 @@ TAG_EXTERNAL_NAME_LIST = 0x00270000
 BAD_INDEX = 0xFFFFFFFF
 
 BYTE_ORDER = 'big'
-
-
-#
-# Tex List
-#
-class Niff2TexListHeader:
-    tex_list_tag: int
-    tex_list_header_size: int
-    tex_list_size: int
-    tex_num: int
-    nintendo_extension_block_size: int
-    user_extension_block_size: int
-
-    @staticmethod
-    def num_bytes():
-        return 6*4
-
-
-def niff2_tex_list_header_builder():
-    tlh = Niff2TexListHeader()
-    tlh.tex_list_tag = TAG_TEX_LIST
-    tlh.tex_list_header_size = 6*4
-    tlh.tex_list_size = 6*4
-    tlh.tex_num = 0
-    tlh.nintendo_extension_block_size = 0
-    tlh.user_extension_block_size = 0
-    return tlh
-
-
-def niff2_tex_list_header_writer(tlh, buf):
-    buf += tlh.tex_list_tag.to_bytes(4, BYTE_ORDER)
-    buf += tlh.tex_list_header_size.to_bytes(4, BYTE_ORDER)
-    buf += tlh.tex_list_size.to_bytes(4, BYTE_ORDER)
-    buf += tlh.tex_num.to_bytes(4, BYTE_ORDER)
-    buf += tlh.nintendo_extension_block_size.to_bytes(4, BYTE_ORDER)
-    buf += tlh.user_extension_block_size.to_bytes(4, BYTE_ORDER)
-    return buf
 
 
 #

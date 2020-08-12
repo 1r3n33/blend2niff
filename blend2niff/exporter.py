@@ -43,6 +43,8 @@ from blend2niff.niff2.niff2_shape import (
 from blend2niff.niff2.niff2_st import (
     niff2_st_list_header_builder, niff2_st_list_header_writer,
     niff2_st_group_builder, niff2_st_group_writer)
+from blend2niff.niff2.niff2_tex import (
+    niff2_tex_list_header_builder, niff2_tex_list_header_writer)
 from blend2niff.niff2.niff2_tri import (
     niff2_tri_list_header_builder, niff2_tri_list_header_writer,
     niff2_tri_group_builder, niff2_tri_group_writer)
@@ -65,7 +67,6 @@ from blend2niff.niff2.niff2_misc import (
     niff2_joint_list_header_builder, niff2_joint_list_header_writer,
     niff2_switch_list_header_builder, niff2_switch_list_header_writer,
     niff2_tex_img_list_header_builder, niff2_tex_img_list_header_writer,
-    niff2_tex_list_header_builder, niff2_tex_list_header_writer,
     niff2_weight_list_header_builder, niff2_weight_list_header_writer)
 
 from blend2niff.helpers import correct_gamma
