@@ -44,7 +44,8 @@ from blend2niff.niff2.niff2_st import (
     niff2_st_list_header_builder, niff2_st_list_header_writer,
     niff2_st_group_builder, niff2_st_group_writer)
 from blend2niff.niff2.niff2_tex import (
-    niff2_tex_list_header_builder, niff2_tex_list_header_writer)
+    niff2_tex_list_header_builder, niff2_tex_list_header_writer,
+    niff2_tex_node_builder, niff2_tex_node_writer)
 from blend2niff.niff2.niff2_tri import (
     niff2_tri_list_header_builder, niff2_tri_list_header_writer,
     niff2_tri_group_builder, niff2_tri_group_writer)
@@ -77,6 +78,7 @@ BAD_INDEX = 0xFFFFFFFF
 class Exporter:
     def __init__(self):
         self.names = []  # All names
+        self.textures = []  # All textures
         self.materials = []  # All materials, 0 is default material
         self.materials_by_mesh = {}  # NIFF2 materials by Blender mesh
         self.vtx_groups = []  # All vertex groups
@@ -550,7 +552,7 @@ def write_niff2(data, filepath):
     st_list_header = niff2_st_list_header_builder(exporter.st_groups)
     part_list_header = niff2_part_list_header_builder(exporter.parts)
     mat_list_header = niff2_mat_list_header_builder(exporter.materials)
-    tex_list_header = niff2_tex_list_header_builder()
+    tex_list_header = niff2_tex_list_header_builder([])
     tex_img_list_header = niff2_tex_img_list_header_builder()
     anim_list_header = niff2_anim_list_header_builder(exporter.anim_groups)
     coll_list_header = niff2_coll_list_header_builder()
@@ -685,7 +687,10 @@ def write_niff2(data, filepath):
     for mat in exporter.materials:
         niff2_mat_node_writer(mat, buf)
 
-    niff2_tex_list_header_writer(tex_list_header, buf)
+    niff2_tex_list_header_writer(tex_list_header, [], buf)
+    for tex in exporter.textures:
+        niff2_tex_node_writer(tex, buf)
+
     niff2_tex_img_list_header_writer(tex_img_list_header, buf)
 
     niff2_anim_list_header_writer(anim_list_header, exporter.anim_groups, buf)
