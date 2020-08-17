@@ -100,12 +100,12 @@ class Niff2TexNode:
         self.tex_tile_height = height
         self.tex_offset_x = 0
         self.tex_offset_y = 0
-        self.tex_img_index = index
+        self.tex_img_index = BAD_INDEX
         self.tex_filter = NIFF2_TEX_FILTER_BILERP
         self.use_perspective_correction = NIFF2_PERSPECTIVE_CORRECTION
         self.mipmap_level = NIFF2_NO_MIPMAP
         self.use_color_palette = NIFF2_NO_USE_COLOR_PALETTE
-        self.external_tex_img_num = BAD_INDEX
+        self.external_tex_img_num = 0  # Do not use BAD_INDEX
 
 
 def niff2_tex_node_builder(index, name_index, width, height):
