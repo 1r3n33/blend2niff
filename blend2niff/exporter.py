@@ -1,7 +1,10 @@
 """Create .nif file from Blender data."""
 
 import bpy
-from bpy.types import (Camera, Light, Mesh)
+from bpy.types import (Camera, Light, Mesh, ShaderNodeTexImage)
+
+import png
+
 from blend2niff.niff2.niff2_anim import (
     niff2_anim_list_header_builder, niff2_anim_list_header_writer,
     niff2_anim_group_builder, niff2_anim_group_writer,
@@ -107,6 +110,31 @@ class Exporter:
         name_node = niff2_name_node_builder(len(self.names), name)
         self.names.append(name_node)
         return name_node
+
+    def create_textures(self, objs):
+        """
+        Create and register all textures.
+        """
+        meshes = [obj.data for obj in objs if isinstance(obj.data, Mesh)]
+
+        for mesh in meshes:
+            for mat in mesh.materials:
+                if mat.use_nodes and mat.node_tree:
+                    tex_img_nodes = [node for node in mat.node_tree.nodes if isinstance(
+                        node, ShaderNodeTexImage)]
+                    for tex_img_node in tex_img_nodes:
+                        filepath = bpy.path.abspath(
+                            tex_img_node.image.filepath, library=tex_img_node.image.library)
+                        png_reader = png.Reader(filepath)
+                        image = png_reader.read()
+
+                        tex_name = self.create_name(
+                            bpy.path.display_name_from_filepath(filepath)+".tex")
+                        tex = niff2_tex_node_builder(len(self.textures),
+                                                     tex_name.index(),
+                                                     width=image[0],
+                                                     height=image[1])
+                        self.textures.append(tex)
 
     def create_materials(self, objs):
         """
@@ -439,6 +467,8 @@ def write_niff2(data, filepath):
 
     scene_name = exporter.create_name(filename+".scene")
 
+    exporter.create_textures(mesh_objs)
+
     exporter.create_materials(mesh_objs)
 
     exporter.create_vertex_groups(mesh_objs)
@@ -495,8 +525,11 @@ def write_niff2(data, filepath):
         exporter.objs.append(eye_obj)
 
         lookat_obj_name = exporter.create_name(cam.name+".lookat.obj")
-        lookat_obj = niff2_obj_node_builder(
-            len(exporter.objs), lookat_obj_name.index(), BAD_INDEX, BAD_INDEX, lookat_anim_group.index())
+        lookat_obj = niff2_obj_node_builder(len(exporter.objs),
+                                            lookat_obj_name.index(),
+                                            BAD_INDEX,
+                                            BAD_INDEX,
+                                            lookat_anim_group.index())
         exporter.objs.append(lookat_obj)
 
         up_obj_name = exporter.create_name(cam.name+".up.obj")
@@ -552,7 +585,7 @@ def write_niff2(data, filepath):
     st_list_header = niff2_st_list_header_builder(exporter.st_groups)
     part_list_header = niff2_part_list_header_builder(exporter.parts)
     mat_list_header = niff2_mat_list_header_builder(exporter.materials)
-    tex_list_header = niff2_tex_list_header_builder([])
+    tex_list_header = niff2_tex_list_header_builder(exporter.textures)
     tex_img_list_header = niff2_tex_img_list_header_builder()
     anim_list_header = niff2_anim_list_header_builder(exporter.anim_groups)
     coll_list_header = niff2_coll_list_header_builder()
@@ -687,7 +720,7 @@ def write_niff2(data, filepath):
     for mat in exporter.materials:
         niff2_mat_node_writer(mat, buf)
 
-    niff2_tex_list_header_writer(tex_list_header, [], buf)
+    niff2_tex_list_header_writer(tex_list_header, exporter.textures, buf)
     for tex in exporter.textures:
         niff2_tex_node_writer(tex, buf)
 

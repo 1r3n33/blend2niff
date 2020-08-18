@@ -1,7 +1,11 @@
 """Tests about creating .nif data from Blender data."""
 
 import unittest
-from bpy.types import (Material,
+from unittest.mock import Mock
+
+import bpy
+from bpy.types import (Image,
+                       Material,
                        Mesh,
                        MeshLoop,
                        MeshLoopColor,
@@ -10,7 +14,12 @@ from bpy.types import (Material,
                        MeshUVLoop,
                        MeshUVLoopLayer,
                        MeshVertex,
-                       Object)
+                       NodeTree,
+                       Object,
+                       ShaderNodeTexImage)
+
+import png
+
 from blend2niff.exporter import Exporter
 
 
@@ -21,6 +30,48 @@ class TestExporter(unittest.TestCase):
         world = exporter.create_name("world")
 
         self.assertEqual(exporter.names, [hello, world])
+
+    def test_create_textures(self):
+        image = Image()
+        image.filepath = "//test/image/path.png"
+        image.library = "//test/image/library"
+
+        node = ShaderNodeTexImage()
+        node.image = image
+
+        material = Material()
+        material.name = "material"
+        material.diffuse_color = [1.0, 1.0, 1.0, 1.0]
+        material.use_nodes = True
+        material.node_tree = NodeTree()
+        material.node_tree.nodes = [node]
+
+        mesh = Mesh()
+        mesh.materials = [material]
+
+        obj = Object()
+        obj.data = mesh
+
+        bpy.path.abspath = Mock(return_value=image.filepath)
+        bpy.path.display_name_from_filepath = Mock(return_value="texture")
+
+        reader = Mock()
+        reader.read = Mock(return_value=[12, 34])
+        png.Reader = Mock(return_value=reader)
+
+        exporter = Exporter()
+        exporter.create_textures([obj])
+
+        bpy.path.abspath.assert_called_once_with(
+            "//test/image/path.png", library="//test/image/library")
+        bpy.path.display_name_from_filepath.assert_called_once_with(
+            "//test/image/path.png")
+        png.Reader.assert_called_once_with("//test/image/path.png")
+        reader.read.assert_called_once()
+
+        self.assertEqual(exporter.names[0].node_name, "texture.tex")
+        self.assertEqual(exporter.textures[0].tex_img_width, 12)
+        self.assertEqual(exporter.textures[0].tex_img_height, 34)
 
     def test_create_materials(self):
         not_a_mesh = Object()
