@@ -1,7 +1,6 @@
 #
 # Consts
 #
-TAG_TEX_IMG_LIST = 0x00120000
 TAG_COLL_LIST = 0x000d0000
 TAG_SWITCH_LIST = 0x00130000
 TAG_CI_IMG_LIST = 0x00200000
@@ -17,43 +16,6 @@ TAG_EXTERNAL_NAME_LIST = 0x00270000
 BAD_INDEX = 0xFFFFFFFF
 
 BYTE_ORDER = 'big'
-
-
-#
-# Tex Img List
-#
-class Niff2TexImgListHeader:
-    tex_img_list_tag: int
-    tex_img_list_header_size: int
-    tex_img_list_size: int
-    tex_img_num: int
-    nintendo_extension_block_size: int
-    user_extension_block_size: int
-
-    @staticmethod
-    def num_bytes():
-        return 6*4
-
-
-def niff2_tex_img_list_header_builder():
-    tilh = Niff2TexImgListHeader()
-    tilh.tex_img_list_tag = TAG_TEX_IMG_LIST
-    tilh.tex_img_list_header_size = 6*4
-    tilh.tex_img_list_size = 6*4
-    tilh.tex_img_num = 0
-    tilh.nintendo_extension_block_size = 0
-    tilh.user_extension_block_size = 0
-    return tilh
-
-
-def niff2_tex_img_list_header_writer(tilh, buf):
-    buf += tilh.tex_img_list_tag.to_bytes(4, BYTE_ORDER)
-    buf += tilh.tex_img_list_header_size.to_bytes(4, BYTE_ORDER)
-    buf += tilh.tex_img_list_size.to_bytes(4, BYTE_ORDER)
-    buf += tilh.tex_img_num.to_bytes(4, BYTE_ORDER)
-    buf += tilh.nintendo_extension_block_size.to_bytes(4, BYTE_ORDER)
-    buf += tilh.user_extension_block_size.to_bytes(4, BYTE_ORDER)
-    return buf
 
 
 #
