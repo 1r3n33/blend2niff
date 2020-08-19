@@ -50,7 +50,8 @@ from blend2niff.niff2.niff2_tex import (
     niff2_tex_list_header_builder, niff2_tex_list_header_writer,
     niff2_tex_node_builder, niff2_tex_node_writer)
 from blend2niff.niff2.niff2_tex_img import (
-    niff2_tex_img_list_header_builder, niff2_tex_img_list_header_writer)
+    niff2_tex_img_list_header_builder, niff2_tex_img_list_header_writer,
+    niff2_tex_img_node_builder, niff2_tex_img_node_writer)
 from blend2niff.niff2.niff2_tri import (
     niff2_tri_list_header_builder, niff2_tri_list_header_writer,
     niff2_tri_group_builder, niff2_tri_group_writer)
@@ -587,7 +588,7 @@ def write_niff2(data, filepath):
     part_list_header = niff2_part_list_header_builder(exporter.parts)
     mat_list_header = niff2_mat_list_header_builder(exporter.materials)
     tex_list_header = niff2_tex_list_header_builder(exporter.textures)
-    tex_img_list_header = niff2_tex_img_list_header_builder()
+    tex_img_list_header = niff2_tex_img_list_header_builder([])
     anim_list_header = niff2_anim_list_header_builder(exporter.anim_groups)
     coll_list_header = niff2_coll_list_header_builder()
     switch_list_header = niff2_switch_list_header_builder()
@@ -725,7 +726,9 @@ def write_niff2(data, filepath):
     for tex in exporter.textures:
         niff2_tex_node_writer(tex, buf)
 
-    niff2_tex_img_list_header_writer(tex_img_list_header, buf)
+    niff2_tex_img_list_header_writer(tex_img_list_header, [], buf)
+    for tex_img in []:
+        niff2_tex_img_node_writer(tex_img, buf)
 
     niff2_anim_list_header_writer(anim_list_header, exporter.anim_groups, buf)
     for anim_group in exporter.anim_groups:
