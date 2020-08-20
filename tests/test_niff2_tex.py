@@ -9,7 +9,7 @@ from blend2niff.niff2.niff2_tex import (
 
 class TestNiff2Tex(unittest.TestCase):
     def test_niff2_tex_list_header_builder(self):
-        tex_node = niff2_tex_node_builder(12, 34, 56, 78)
+        tex_node = niff2_tex_node_builder(12, 34, 56, 78, 90)
         tex_nodes = [tex_node]*4
         tex_list_header = niff2_tex_list_header_builder(tex_nodes)
         self.assertEqual(tex_list_header.tex_list_tag, 0x000B0000)
@@ -20,7 +20,7 @@ class TestNiff2Tex(unittest.TestCase):
         self.assertEqual(tex_list_header.user_extension_block_size, 0)
 
     def test_niff2_tex_list_header_writer(self):
-        tex_node = niff2_tex_node_builder(12, 34, 56, 78)
+        tex_node = niff2_tex_node_builder(12, 34, 56, 78, 90)
         tex_nodes = [tex_node]*4
         tex_list_header = niff2_tex_list_header_builder(tex_nodes)
         buf = niff2_tex_list_header_writer(
@@ -38,7 +38,7 @@ class TestNiff2Tex(unittest.TestCase):
         self.assertEqual(list(buf), byte_list)
 
     def test_niff2_tex_node_builder(self):
-        tex_node = niff2_tex_node_builder(12, 34, 56, 78)
+        tex_node = niff2_tex_node_builder(12, 34, 56, 78, 90)
         self.assertEqual(tex_node.tex_tag, 0x000B0100)
         self.assertEqual(tex_node.this_tex_index, 12)
         self.assertEqual(tex_node.tex_header_size, 52)
@@ -52,13 +52,13 @@ class TestNiff2Tex(unittest.TestCase):
         self.assertEqual(tex_node.tex_anim_frame_rate, 0)
         self.assertEqual(tex_node.nintendo_extension_block_size, 20)
         self.assertEqual(tex_node.user_extension_block_size, 0)
-        self.assertEqual(tex_node.tex_img_width, 56)
-        self.assertEqual(tex_node.tex_img_height, 78)
-        self.assertEqual(tex_node.tex_tile_width, 56)
-        self.assertEqual(tex_node.tex_tile_height, 78)
+        self.assertEqual(tex_node.tex_img_width, 78)
+        self.assertEqual(tex_node.tex_img_height, 90)
+        self.assertEqual(tex_node.tex_tile_width, 78)
+        self.assertEqual(tex_node.tex_tile_height, 90)
         self.assertEqual(tex_node.tex_offset_x, 0)
         self.assertEqual(tex_node.tex_offset_y, 0)
-        self.assertEqual(tex_node.tex_img_index, 0xFFFFFFFF)
+        self.assertEqual(tex_node.tex_img_index, 56)
         self.assertEqual(tex_node.tex_filter, 1)
         self.assertEqual(tex_node.use_perspective_correction, 1)
         self.assertEqual(tex_node.mipmap_level, 0)
@@ -66,7 +66,7 @@ class TestNiff2Tex(unittest.TestCase):
         self.assertEqual(tex_node.external_tex_img_num, 0)
 
     def test_niff2_tex_node_writer(self):
-        tex_node = niff2_tex_node_builder(12, 34, 56, 78)
+        tex_node = niff2_tex_node_builder(12, 34, 56, 78, 90)
         buf = niff2_tex_node_writer(tex_node, bytearray())
         byte_list = [0x00, 0x0B, 0x01, 0x00,
                      0x00, 0x00, 0x00, 0x0C,
@@ -81,13 +81,13 @@ class TestNiff2Tex(unittest.TestCase):
                      0x00, 0x00, 0x00, 0x00,
                      0x00, 0x00, 0x00, 0x14,
                      0x00, 0x00, 0x00, 0x00,
-                     0x00, 0x00, 0x00, 0x38,
                      0x00, 0x00, 0x00, 0x4E,
-                     0x00, 0x00, 0x00, 0x38,
+                     0x00, 0x00, 0x00, 0x5A,
                      0x00, 0x00, 0x00, 0x4E,
+                     0x00, 0x00, 0x00, 0x5A,
                      0x00, 0x00, 0x00, 0x00,
                      0x00, 0x00, 0x00, 0x00,
-                     0xFF, 0xFF, 0xFF, 0xFF,
+                     0x00, 0x00, 0x00, 0x38,
                      0x00, 0x00, 0x00, 0x01,
                      0x00, 0x00, 0x00, 0x01,
                      0x00, 0x00, 0x00, 0x00,

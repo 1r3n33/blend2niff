@@ -47,9 +47,9 @@ def niff2_tex_img_list_header_writer(tex_img_list_header, tex_img_nodes, buf):
 class Niff2TexImgNode:
     def __init__(self, index, tex_img_data):
         self.tex_img_tag = TAG_TEX_IMG
-        self.this_tex_img_index = index
-        self.tex_img_header_size = (7*4)
-        self.tex_img_size = (7*4) + (1*4) + len(tex_img_data)
+        self.index = index
+        self.tex_img_header_size = (6*4)
+        self.tex_img_size = (6*4) + (1*4) + len(tex_img_data)
         self.nintendo_extension_block_size = (1*4)
         self.user_extension_block_size = 0
         self.tex_img_data = tex_img_data
@@ -62,7 +62,7 @@ def niff2_tex_img_node_builder(index, tex_img_data):
 
 def niff2_tex_img_node_writer(tex_img_node, buf):
     buf += tex_img_node.tex_img_tag.to_bytes(4, BYTE_ORDER)
-    buf += tex_img_node.this_tex_img_index.to_bytes(4, BYTE_ORDER)
+    buf += tex_img_node.index.to_bytes(4, BYTE_ORDER)
     buf += tex_img_node.tex_img_header_size.to_bytes(4, BYTE_ORDER)
     buf += tex_img_node.tex_img_size.to_bytes(4, BYTE_ORDER)
     buf += tex_img_node.nintendo_extension_block_size.to_bytes(4, BYTE_ORDER)

@@ -56,7 +56,7 @@ class TestExporter(unittest.TestCase):
         bpy.path.display_name_from_filepath = Mock(return_value="texture")
 
         reader = Mock()
-        reader.read = Mock(return_value=[12, 34])
+        reader.read = Mock(return_value=[12, 34, [[0x05, 0x06], [0x07, 0x08]]])
         png.Reader = Mock(return_value=reader)
 
         exporter = Exporter()
@@ -70,6 +70,7 @@ class TestExporter(unittest.TestCase):
         reader.read.assert_called_once()
 
         self.assertEqual(exporter.names[0].node_name, "texture.tex")
+        self.assertEqual(exporter.tex_images[0].tex_img_data, [5, 6, 7, 8])
         self.assertEqual(exporter.textures[0].tex_img_width, 12)
         self.assertEqual(exporter.textures[0].tex_img_height, 34)
 

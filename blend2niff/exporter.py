@@ -84,6 +84,7 @@ class Exporter:
     def __init__(self):
         self.names = []  # All names
         self.textures = []  # All textures
+        self.tex_images = []  # All texture images
         self.materials = []  # All materials, 0 is default material
         self.materials_by_mesh = {}  # NIFF2 materials by Blender mesh
         self.vtx_groups = []  # All vertex groups
@@ -130,10 +131,16 @@ class Exporter:
                         png_reader = png.Reader(filepath)
                         image = png_reader.read()
 
+                        tex_img = niff2_tex_img_node_builder(
+                            len(self.tex_images), [byte for row in image[2] for byte in row])
+                        self.tex_images.append(tex_img)
+
                         tex_name = self.create_name(
                             bpy.path.display_name_from_filepath(filepath)+".tex")
+
                         tex = niff2_tex_node_builder(len(self.textures),
                                                      tex_name.index(),
+                                                     tex_img.index,
                                                      width=image[0],
                                                      height=image[1])
                         self.textures.append(tex)
@@ -588,7 +595,8 @@ def write_niff2(data, filepath):
     part_list_header = niff2_part_list_header_builder(exporter.parts)
     mat_list_header = niff2_mat_list_header_builder(exporter.materials)
     tex_list_header = niff2_tex_list_header_builder(exporter.textures)
-    tex_img_list_header = niff2_tex_img_list_header_builder([])
+    tex_img_list_header = niff2_tex_img_list_header_builder(
+        exporter.tex_images)
     anim_list_header = niff2_anim_list_header_builder(exporter.anim_groups)
     coll_list_header = niff2_coll_list_header_builder()
     switch_list_header = niff2_switch_list_header_builder()
@@ -726,8 +734,9 @@ def write_niff2(data, filepath):
     for tex in exporter.textures:
         niff2_tex_node_writer(tex, buf)
 
-    niff2_tex_img_list_header_writer(tex_img_list_header, [], buf)
-    for tex_img in []:
+    niff2_tex_img_list_header_writer(
+        tex_img_list_header, exporter.tex_images, buf)
+    for tex_img in exporter.tex_images:
         niff2_tex_img_node_writer(tex_img, buf)
 
     niff2_anim_list_header_writer(anim_list_header, exporter.anim_groups, buf)
