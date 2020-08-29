@@ -73,10 +73,10 @@ class Niff2EnvNode:
 
 
 def niff2_env_node_builder(index, name_index, background_color_rgb_f):
-    r = int(background_color_rgb_f[0]*255.0)
-    g = int(background_color_rgb_f[1]*255.0)
-    b = int(background_color_rgb_f[2]*255.0)
-    fill_color = (r << 16) | (g << 8) | b
+    red = int(background_color_rgb_f[0]*255.0)
+    green = int(background_color_rgb_f[1]*255.0)
+    blue = int(background_color_rgb_f[2]*255.0)
+    fill_color = (red << 16) | (green << 8) | blue
     return Niff2EnvNode(index, name_index, fill_color)
 
 
