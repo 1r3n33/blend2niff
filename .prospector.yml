@@ -27,6 +27,7 @@ pylint:
     min-public-methods: 1
     max-public-methods: 20
     max-line-length: 99
+    max-attributes: 99
     ignored-modules: bpy,parameterized,png
 
 pep8:
