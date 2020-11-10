@@ -34,10 +34,19 @@ You can render exported data using the [nvfview](https://ultra64.ca/files/docume
 <a name="installation"></a>
 ## Installation
 
-Download the latest [blend2niff.zip](https://github.com/1r3n33/blend2niff/releases/latest) release.
+- Install the [pypng](https://pypi.org/project/pypng/) dependency:
 
-In Blender _"Edit > Preferences > Add-ons > Install"_ select the .zip file.
+    ```bash
+    cd <path_to_blender>/2.83/python/bin/
+    ./python3.7m -m ensurepip
+    ./python3.7m -m pip install --upgrade pip
+    ./python3.7m -m pip install pypng
+    ```
 
-Click the checkbox to enable the add-on:
+- Install the latest [blend2niff.zip](https://github.com/1r3n33/blend2niff/releases/latest) release:
 
-![install](./screenshots/install.png)
+    In Blender _"Edit > Preferences > Add-ons > Install"_ select the .zip file.
+
+    Click the checkbox to enable the add-on:
+
+    ![install](./screenshots/install.png)
